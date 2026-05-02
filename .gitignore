@@ -1,0 +1,19 @@
+# Mediul virtual
+venv/
+ENV/
+env/
+
+# Fișiere de configurare privată (AICI SUNT CHEILE TALE SPOTIFY!)
+.env
+
+# Cache-ul de Python (fișiere temporare generate automat)
+**/__pycache__/
+*.py[cod]
+
+# Baza de date locală (SQLite)
+*.db
+
+# Fișiere de sistem/IDE
+.vscode/
+.idea/
+.DS_Store
