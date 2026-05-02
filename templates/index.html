@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Connectify - Home</title>
+    <!-- Facem legătura cu fișierul CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="logo">Connectify</h1>
+        </header>
+        
+        <main>
+            <section class="hero">
+                <h1>Welcome to <b>Connectify!</b></h1>
+                <p>Descoperă ce spun prietenii despre muzica ta preferată.</p>
+                
+                <!-- Folosim variabila auth_url pe care o vom trimite din Flask -->
+                <a href="{{ auth_url }}" class="btn-spotify">
+                    Loghează-te cu Spotify
+                </a>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Connectify. Toate drepturile rezervate.</p>
+        </footer>
+    </div>
+</body>
+</html>
