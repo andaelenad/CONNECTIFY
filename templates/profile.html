@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Connectify - Profilul Meu</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="profile-container">
+        <header>
+            <h1 class="logo">Connectify</h1>
+            <nav>
+                <a href="/">Acasă</a> | <a href="/logout">Logout</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="user-info">
+                <h2>Topul tău de piese:</h2>
+                <p>Acestea sunt melodiile care te definesc în acest moment.</p>
+            </section>
+
+            <ul class="track-list">
+                {% for track in tracks %}
+                    <li class="track-item">
+                        <strong>{{ track.name }}</strong> 
+                        <span class="artist-name">by {{ track.artists[0].name }}</span>
+                        <!-- Aici punem butonul de "Rate Album/Song" -->
+                        <button class="rate-btn">Rate ⭐</button>
+                    </li>
+                {% endfor %}
+            </ul>
+        </main>
+
+        <footer>
+            <a href="/" class="back-link">← Înapoi la pagina principală</a>
+            <p>&copy; 2026 Connectify</p>
+        </footer>
+    </div>
+</body>
+</html>
