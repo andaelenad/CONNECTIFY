@@ -1,0 +1,36 @@
+body {
+    background-color: #121212; /* Negru Spotify */
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+}
+
+.btn-spotify {
+    display: inline-block;
+    background-color: #1DB954; /* Verde Spotify */
+    color: white;
+    padding: 15px 30px;
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: bold;
+    margin-top: 20px;
+    transition: transform 0.2s;
+}
+
+.btn-spotify:hover {
+    transform: scale(1.05);
+    background-color: #1ed760;
+}
+
+.logo {
+    color: #1DB954;
+    font-size: 3rem;
+}
