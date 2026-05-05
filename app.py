@@ -1,10 +1,9 @@
 import os
-# AM ADAUGAT render_template AICI
 from flask import Flask, request, url_for, session, redirect, render_template 
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
-from flask_sqlalchemy import SQLAlchemy # pt baza de date
+from flask_sqlalchemy import SQLAlchemy 
 
 load_dotenv()
 
@@ -13,9 +12,10 @@ app = Flask(__name__)
 app.secret_key = "cheie_secreta_pentru_proiect_connectify"
 app.config['SESSION_COOKIE_NAME'] = 'Connectify_Session'
 
-# configurări pt baza de date
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'connectify.db')
+# --- CONFIGURARE BAZĂ DE DATE (AIVEN) ---
+# Aici înlocuiești cu Service URI-ul tău de pe Aiven
+# Am adăugat "postgresql" în loc de "postgres" pentru compatibilitate
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://avnadmin:AVNS_dlwEpYk7NtFpIKxzuWF@pg-6647a18-rurig.d.aivencloud.com:26923/defaultdb?sslmode=require"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -25,11 +25,10 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     spotify_id = db.Column(db.String(100), unique=True, nullable=False)
     display_name = db.Column(db.String(100))
-    # legatura cu rating-uri
     ratings = db.relationship('Rating', backref='user', lazy=True)
 
 class SongCache(db.Model):
-    spotify_id = db.Column(db.String(100), primary_key=True) # ID-ul unic de la Spotify
+    spotify_id = db.Column(db.String(100), primary_key=True) 
     name = db.Column(db.String(200), nullable=False)
     artist = db.Column(db.String(200))
     image_url = db.Column(db.String(500))
@@ -37,7 +36,7 @@ class SongCache(db.Model):
 
 class Rating(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    score = db.Column(db.Integer, nullable=False) # nota 1-5
+    score = db.Column(db.Integer, nullable=False) 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     spotify_item_id = db.Column(db.String(100), db.ForeignKey('song_cache.spotify_id'), nullable=False)
 
@@ -45,7 +44,7 @@ class Friendship(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     friend_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    status = db.Column(db.String(20), default='pending') # pending, accepted, rejected
+    status = db.Column(db.String(20), default='pending')
 
 # functionalitati app
 def create_spotify_oauth():
@@ -72,7 +71,6 @@ def get_token():
 def login():
     sp_oauth = create_spotify_oauth()
     auth_url = sp_oauth.get_authorize_url()
-    # trimite la index.html
     return render_template('index.html', auth_url=auth_url)
 
 # 2. RUTA CALLBACK
@@ -84,14 +82,11 @@ def callback():
     token_info = sp_oauth.get_access_token(code)
     session["token_info"] = token_info
 
-    # aici salvam userul in baza noastra cand se logheaza
     sp = spotipy.Spotify(auth=token_info['access_token'])
     spotify_user = sp.current_user()
 
-    # verificam daca il avem deja in tabel
     existing_user = User.query.filter_by(spotify_id=spotify_user['id']).first()
     if not existing_user:
-        # daca e nou, il adaugam acum
         new_user = User(spotify_id=spotify_user['id'], display_name=spotify_user['display_name'])
         db.session.add(new_user)
         db.session.commit()
@@ -109,11 +104,9 @@ def get_tracks():
     sp = spotipy.Spotify(auth=token_info['access_token'])
     results = sp.current_user_top_tracks(limit=5, time_range='short_term')
     
-    # trimitem datele catre profil.html
     tracks = results['items']
     return render_template('profile.html', tracks=tracks)
 
-# cautare utilizatori după display_name
 @app.route('/search_users', methods=['GET', 'POST'])
 def search_users():
     query = request.args.get('query')
@@ -129,7 +122,6 @@ def search_users():
     
     return render_template('search_users.html', users=users)
 
-# send cerere prietenie
 @app.route('/add_friend/<int:friend_id>')
 def add_friend(friend_id):
     token_info = get_token()
@@ -141,7 +133,6 @@ def add_friend(friend_id):
 
     if not me_db: return redirect('/')
 
-    # verificare daca exista relatie deja
     exists = Friendship.query.filter_by(user_id=me_db.id, friend_id=friend_id).first()
     if not exists:
         new_friendship = Friendship(user_id=me_db.id, friend_id=friend_id, status='pending')
@@ -161,14 +152,11 @@ def view_requests():
 
     if not me_db: return redirect('/')
 
-    # cererile unde ID-ul meu este la "friend_id" (cineva m-a adaugat pe mine)
     pending_requests = Friendship.query.filter_by(friend_id=me_db.id, status='pending').all()
-    # trebuie join manual sau să cautam userii care au trimis cererea
     requesters = [User.query.get(req.user_id) for req in pending_requests]
     
     return render_template('requests.html', requesters=requesters)
 
-# accept cerere prietenie (adaugata pentru functionalitate)
 @app.route('/accept_friend/<int:requester_id>')
 def accept_friend(requester_id):
     token_info = get_token()
@@ -187,5 +175,6 @@ def accept_friend(requester_id):
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all() # asta forteaza crearea tabelelor la pornire
+        # Această linie va crea tabelele pe Aiven automat la pornire
+        db.create_all() 
     app.run(debug=True)
