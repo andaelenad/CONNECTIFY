@@ -15,7 +15,7 @@ body {
 
 .btn-spotify {
     display: inline-block;
-    background-color: #1DB954; /* Verde Spotify */
+    background-color: #e50991; 
     color: white;
     padding: 15px 30px;
     text-decoration: none;
@@ -27,10 +27,10 @@ body {
 
 .btn-spotify:hover {
     transform: scale(1.05);
-    background-color: #1ed760;
+    background-color: #e50991;
 }
 
 .logo {
-    color: #1DB954;
+    color: #e50991;
     font-size: 3rem;
 }

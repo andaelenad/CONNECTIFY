@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Caută Utilizatori</title>
+     <link rel="stylesheet" href="{{ url_for('static', filename='search_user.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="/get_tracks">Profil</a> | 
+        <a href="/search_users">Caută Prieteni</a> | 
+        <a href="/requests">Cereri Prietenie</a>
+    </nav>
+    <hr>
+    <h1>Caută utilizatori Connectify</h1>
+    <form action="/search_users" method="get">
+        <input type="text" name="query" placeholder="Introdu nume utilizator...">
+        <button type="submit">Caută</button>
+    </form>
+
+    {% if users %}
+        <ul>
+            {% for user in users %}
+            <li>
+                {{ user.display_name }} 
+                <a href="{{ url_for('add_friend', friend_id=user.id) }}">
+                    <button>Trimite Cerere</button>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    {% elif request.args.get('query') %}
+        <p>Nu am găsit niciun utilizator cu acest nume.</p>
+    {% endif %}
+</body>
+</html>
