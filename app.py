@@ -1,6 +1,6 @@
 import os
 # AM ADAUGAT render_template AICI
-from flask import Flask, request, url_for, session, redirect, render_template 
+from flask import Flask, request, url_for, session, redirect, render_template, flash
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
@@ -84,6 +84,25 @@ def signup():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
+
+        if len(password) < 8:
+            flash("Eroare: Parola trebuie să aibă minim 8 caractere!", "danger")
+            return render_template('signup.html')
+        
+        if not any(char.isupper() for char in password):
+            flash("Eroare: Parola trebuie să conțină cel puțin o majusculă!", "danger")
+            return render_template('signup.html')
+
+        if User.query.filter_by(email=email).first():
+            flash("Email-ul există deja!", "warning")
+            return render_template('signup.html')
+
+        new_user = User(email=email)
+        new_user.set_password(password)
+        db.session.add(new_user)
+        db.session.commit()
+        
+        flash("Cont creat cu succes! Te poți loga.", "success")
         if User.query.filter_by(email=email).first():
             return "Email-ul există deja!"
         new_user = User(email=email)
@@ -168,6 +187,13 @@ def view_friends():
         (Friendship.status == 'accepted')
     ).all()
 
+
+    # și unde statusul este 'accepted'
+    friendships = Friendship.query.filter(
+        ((Friendship.user_id == session['user_id']) | (Friendship.friend_id == session['user_id'])),
+        (Friendship.status == 'accepted')
+    ).all()
+
     friends_list = []
     for f in friendships:
         # Dacă eu sunt user_id, prietenul este friend_id. Și invers.
@@ -209,6 +235,15 @@ def search_users():
 # send cerere prietenie
 @app.route('/add_friend/<int:friend_id>')
 def add_friend(friend_id):
+    if 'user_id' not in session: 
+        return redirect(url_for('login_app'))
+    
+   
+    if session['user_id'] == friend_id:
+        flash("Nu îți poți trimite cerere de prietenie singur!", "danger")
+        return redirect(url_for('search_users'))
+
+    
     if 'user_id' not in session: return redirect(url_for('login_app'))
     
     # verificare daca exista relatie deja
@@ -217,6 +252,7 @@ def add_friend(friend_id):
         new_friendship = Friendship(user_id=session['user_id'], friend_id=friend_id, status='pending')
         db.session.add(new_friendship)
         db.session.commit()
+        flash("Cerere de prietenie trimisă!", "success")
     
     return redirect(url_for('search_users'))
 
@@ -276,6 +312,10 @@ def delete_user(uid):
     
     return redirect(url_for('admin_panel'))
 
+if __name__ == '__main__':
+    with app.app_context():
+        #db.drop_all() # rulează o dată dacă schimbi structura tabelelor
+        db.create_all() # asta forteaza crearea tabelelor la pornire
 @app.route('/delete_my_account', methods=['POST'])
 def delete_self():
     if 'user_id' not in session:

@@ -1,5 +1,24 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" style="
+          padding: 15px; 
+          margin-bottom: 20px; 
+          border: 1px solid transparent; 
+          border-radius: 4px;
+          color: #721c24; 
+          background-color: #f8d7da; 
+          border-color: #f5c6cb;
+          font-weight: bold;
+          text-align: center;">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
 <head>
     <link rel="stylesheet" href="{{ url_for('static', filename='login+signup.css') }}">
+    <link rel="icon" type="/x-icon" href="static/favicon.ico">
 </head>
 <form action="/signup" method="POST">
     <h2>Creează cont Connectify</h2>
