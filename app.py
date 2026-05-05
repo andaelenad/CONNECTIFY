@@ -89,7 +89,9 @@ def signup():
         new_user = User(email=email)
         if email == "ruricojocaru@gmail.com": 
             new_user.is_admin = True
-        new_user = User(email=email)
+        if email == "sabinabrinzei277@gmail.com": 
+            new_user.is_admin = True
+
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
@@ -273,6 +275,26 @@ def delete_user(uid):
         db.session.commit()
     
     return redirect(url_for('admin_panel'))
+
+@app.route('/delete_my_account', methods=['POST'])
+def delete_self():
+    if 'user_id' not in session:
+        return redirect(url_for('login_app'))
+
+    uid = session['user_id']
+    user = User.query.get(uid)
+
+    if user:
+        # Curățăm tot ce ține de acest user
+        Friendship.query.filter((Friendship.user_id == uid) | (Friendship.friend_id == uid)).delete()
+        Rating.query.filter_by(user_id=uid).delete()
+        
+        db.session.delete(user)
+        db.session.commit()
+        session.clear() # Foarte important: scoatem user-ul din sesiune
+        return render_template('account_deleted.html')
+    
+    return "Eroare la ștergere", 404
 
 if __name__ == '__main__':
     with app.app_context():

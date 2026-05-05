@@ -27,17 +27,17 @@
 
         <!-- --- ADAUGĂ ACEASTĂ SECȚIUNE PENTRU ADMIN --- -->
         {% if user.is_admin %}
-        <div style="margin-top: 30px; padding: 15px; border: 2px dashed #333; border-radius: 10px; background: #fffbe6;">
-            <p><strong>🛡️ Zona Administrator</strong></p>
-            <a href="{{ url_for('admin_panel') }}" class="btn-primary" style="background: #333; color: white; text-decoration: none; padding: 8px 15px; border-radius: 5px; display: inline-block;">
+        <div>
+            <p><strong>Zona de administrator</strong></p>
+            <a href="{{ url_for('admin_panel') }}" class="btn-primary">
                 Deschide Panou Admin
             </a>
         </div>
         {% endif %}
         <!-- -------------------------------------------- -->
 
-        <hr style="margin: 20px 0;">
-        <a href="{{ url_for('logout') }}" style="color: red;">Logout din aplicație</a>
+        <hr>
+        <a href="{{ url_for('logout') }}">Logout din aplicație</a>
     </div>
 </body>
 </html>
