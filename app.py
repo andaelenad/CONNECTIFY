@@ -56,6 +56,17 @@ def create_spotify_oauth():
         scope="user-top-read"
     )
 
+def get_token():
+    token_info = session.get('token_info', None)
+    if not token_info:
+        return None
+    
+    sp_oauth = create_spotify_oauth()
+    if sp_oauth.is_token_expired(token_info):
+        token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
+        session['token_info'] = token_info
+    return token_info
+
 # 1. RUTA PRINCIPALĂ
 @app.route('/')
 def login():
@@ -91,7 +102,7 @@ def callback():
 # 3. RUTA PROFIL 
 @app.route('/get_tracks')
 def get_tracks():
-    token_info = session.get('token_info', None)
+    token_info = get_token()
     if not token_info:
         return redirect('/')
     
@@ -102,7 +113,79 @@ def get_tracks():
     tracks = results['items']
     return render_template('profile.html', tracks=tracks)
 
+# cautare utilizatori după display_name
+@app.route('/search_users', methods=['GET', 'POST'])
+def search_users():
+    query = request.args.get('query')
+    users = []
+    if query:
+        token_info = get_token()
+        if not token_info: return redirect('/')
+        
+        sp = spotipy.Spotify(auth=token_info['access_token'])
+        me = sp.current_user()
+        
+        users = User.query.filter(User.display_name.contains(query), User.spotify_id != me['id']).all()
+    
+    return render_template('search_users.html', users=users)
+
+# send cerere prietenie
+@app.route('/add_friend/<int:friend_id>')
+def add_friend(friend_id):
+    token_info = get_token()
+    if not token_info: return redirect('/')
+    
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+    me_spotify = sp.current_user()
+    me_db = User.query.filter_by(spotify_id=me_spotify['id']).first()
+
+    if not me_db: return redirect('/')
+
+    # verificare daca exista relatie deja
+    exists = Friendship.query.filter_by(user_id=me_db.id, friend_id=friend_id).first()
+    if not exists:
+        new_friendship = Friendship(user_id=me_db.id, friend_id=friend_id, status='pending')
+        db.session.add(new_friendship)
+        db.session.commit()
+    
+    return redirect(url_for('search_users'))
+
+@app.route('/requests')
+def view_requests():
+    token_info = get_token()
+    if not token_info: return redirect('/')
+
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+    me_spotify = sp.current_user()
+    me_db = User.query.filter_by(spotify_id=me_spotify['id']).first()
+
+    if not me_db: return redirect('/')
+
+    # cererile unde ID-ul meu este la "friend_id" (cineva m-a adaugat pe mine)
+    pending_requests = Friendship.query.filter_by(friend_id=me_db.id, status='pending').all()
+    # trebuie join manual sau să cautam userii care au trimis cererea
+    requesters = [User.query.get(req.user_id) for req in pending_requests]
+    
+    return render_template('requests.html', requesters=requesters)
+
+# accept cerere prietenie (adaugata pentru functionalitate)
+@app.route('/accept_friend/<int:requester_id>')
+def accept_friend(requester_id):
+    token_info = get_token()
+    if not token_info: return redirect('/')
+
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+    me_spotify = sp.current_user()
+    me_db = User.query.filter_by(spotify_id=me_spotify['id']).first()
+
+    friendship = Friendship.query.filter_by(user_id=requester_id, friend_id=me_db.id, status='pending').first()
+    if friendship:
+        friendship.status = 'accepted'
+        db.session.commit()
+    
+    return redirect(url_for('view_requests'))
+
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all() # Asta fortează crearea tabelelor la pornire
+        db.create_all() # asta forteaza crearea tabelelor la pornire
     app.run(debug=True)

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cereri de Prietenie</title>
+     <link rel="stylesheet" href="{{ url_for('static', filename='requests.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="/get_tracks">Profil</a> | 
+        <a href="/search_users">Caută Prieteni</a> | 
+        <a href="/requests">Cereri Prietenie</a>
+    </nav>
+    <hr>
+    <h1>Cereri de prietenie primite</h1>
+
+    {% if requesters %}
+        <ul>
+            {% for requester in requesters %}
+            <li>
+                <strong>{{ requester.display_name }}</strong> ți-a trimis o cerere.
+                <a href="{{ url_for('accept_friend', requester_id=requester.id) }}">
+                    <button style="background-color: #1DB954; color: white;">Acceptă</button>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nu ai nicio cerere nouă de prietenie.</p>
+    {% endif %}
+</body>
+</html>

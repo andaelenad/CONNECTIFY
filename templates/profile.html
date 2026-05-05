@@ -10,7 +10,10 @@
         <header>
             <h1 class="logo">Connectify</h1>
             <nav>
-                <a href="/">Acasă</a> | <a href="/logout">Logout</a>
+                <!-- link uri pt functionalitatile de add friend -->
+                <a href="/get_tracks">Profil</a> | 
+                <a href="/search_users">Caută Prieteni</a> | 
+                <a href="/requests">Cereri Prietenie</a>
             </nav>
         </header>
 
@@ -22,11 +25,17 @@
 
             <ul class="track-list">
                 {% for track in tracks %}
-                    <li class="track-item">
-                        <strong>{{ track.name }}</strong> 
-                        <span class="artist-name">by {{ track.artists[0].name }}</span>
-                        <!-- Aici punem butonul de "Rate Album/Song" -->
-                        <button class="rate-btn">Rate ⭐</button>
+                    <li class="track-item" style="display: flex; align-items: center; margin-bottom: 15px;">
+                        <!-- imaginea albumului pentru un aspect profi -->
+                        <img src="{{ track.album.images[2].url }}" alt="Copertă" style="margin-right: 15px; border-radius: 4px;">
+                        
+                        <div class="track-details">
+                            <strong>{{ track.name }}</strong> <br>
+                            <span class="artist-name">by {{ track.artists[0].name }}</span>
+                        </div>
+
+                        <!-- butonul de "Rate Album/Song" -->
+                        <button class="rate-btn" style="margin-left: auto;">Rate ⭐</button>
                     </li>
                 {% endfor %}
             </ul>

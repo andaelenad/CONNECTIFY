@@ -1,0 +1,104 @@
+body {
+    background-color: #121212;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+
+.logo {
+    color: #e50991;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+/* navigatia */
+nav {
+    margin-bottom: 30px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+nav a:hover {
+    color: #e50991;
+}
+
+/* search */
+form {
+    margin-bottom: 40px;
+    display: flex;
+    gap: 10px;
+}
+
+input[type="text"] {
+    padding: 12px 20px;
+    border-radius: 25px;
+    border: 1px solid #333;
+    background-color: #282828;
+    color: white;
+    width: 250px;
+    outline: none;
+}
+
+input[type="text"]:focus {
+    border-color: #e50991;
+}
+
+button {
+    background-color: #e50991;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+/* lista users */
+ul {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    max-width: 500px;
+}
+
+li {
+    background-color: #181818;
+    margin-bottom: 10px;
+    padding: 15px 20px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+li:hover {
+    background-color: #282828;
+}
+
+/* link adaugare friend */
+.btn-add {
+    background-color: #e50991;
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
