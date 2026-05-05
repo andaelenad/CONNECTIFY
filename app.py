@@ -6,6 +6,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy # pt baza de date
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import timedelta
 
 load_dotenv()
 
@@ -103,9 +104,6 @@ def signup():
         db.session.commit()
         
         flash("Cont creat cu succes! Te poți loga.", "success")
-        if User.query.filter_by(email=email).first():
-            return "Email-ul există deja!"
-        new_user = User(email=email)
         if email == "ruricojocaru@gmail.com": 
             new_user.is_admin = True
         if email == "sabinabrinzei277@gmail.com": 
@@ -117,6 +115,12 @@ def signup():
         return redirect(url_for('login_app'))
     return render_template('signup.html')
 
+
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 @app.route('/login_app', methods=['GET', 'POST'])
 def login_app():
     if request.method == 'POST':
@@ -124,6 +128,7 @@ def login_app():
         password = request.form.get('password')
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
+            session.permanent = True
             session['user_id'] = user.id
             return redirect(url_for('dashboard'))
         return "Login eșuat!"
@@ -180,14 +185,6 @@ def callback():
 def view_friends():
     if 'user_id' not in session:
         return redirect(url_for('login_app'))
-
-    # și unde statusul este 'accepted'
-    friendships = Friendship.query.filter(
-        ((Friendship.user_id == session['user_id']) | (Friendship.friend_id == session['user_id'])),
-        (Friendship.status == 'accepted')
-    ).all()
-
-
     # și unde statusul este 'accepted'
     friendships = Friendship.query.filter(
         ((Friendship.user_id == session['user_id']) | (Friendship.friend_id == session['user_id'])),
@@ -312,10 +309,6 @@ def delete_user(uid):
     
     return redirect(url_for('admin_panel'))
 
-if __name__ == '__main__':
-    with app.app_context():
-        #db.drop_all() # rulează o dată dacă schimbi structura tabelelor
-        db.create_all() # asta forteaza crearea tabelelor la pornire
 @app.route('/delete_my_account', methods=['POST'])
 def delete_self():
     if 'user_id' not in session:
