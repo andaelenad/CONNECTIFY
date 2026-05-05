@@ -19,7 +19,16 @@ app.config['SESSION_COOKIE_NAME'] = 'Connectify_Session'
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://avnadmin:AVNS_dlwEpYk7NtFpIKxzuWF@pg-6647a18-rurig.d.aivencloud.com:26923/defaultdb?sslmode=require"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
+class DatabaseSingleton:
+    _instance = None
+
+    def __new__(cls, app=None):
+        if cls._instance is None:
+            # Dacă _instance este None, înseamnă că e prima dată când apelăm clasa
+            cls._instance = SQLAlchemy(app)
+        return cls._instance
+
+db = DatabaseSingleton(app)
 
 # clase pt db
 class User(db.Model):
