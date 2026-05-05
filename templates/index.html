@@ -15,12 +15,19 @@
         <main>
             <section class="hero">
                 <h1>Welcome to <b>Connectify!</b></h1>
-                <p>Descoperă ce spun prietenii despre muzica ta preferată.</p>
+                <p>Creează-ți un cont pentru a vedea ce ascultă prietenii tăi și pentru a acorda note melodiilor preferate.</p>
                 
-                <!-- variabila auth_url pe care o vom trimite din Flask -->
-                       <a href="{{ auth_url }}" class="btn-spotify">
-                    Loghează-te cu Spotify
-                </a>
+                <div class="auth-buttons" style="margin-top: 20px;">
+                    <!-- Buton pentru Creare Cont Nou -->
+                    <a href="{{ url_for('signup') }}" class="btn-primary" style="margin-right: 10px;">
+                        Creează Cont (Sign Up)
+                    </a>
+                    
+                    <!-- Buton pentru Logare in contul existent -->
+                    <a href="{{ url_for('login_app') }}" class="btn-secondary">
+                        Loghează-te (Login)
+                    </a>
+                </div>
             </section>
         </main>
 

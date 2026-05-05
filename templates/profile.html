@@ -10,10 +10,9 @@
         <header>
             <h1 class="logo">Connectify</h1>
             <nav>
-                <!-- link uri pt functionalitatile de add friend -->
-                <a href="/get_tracks">Profil</a> | 
-                <a href="/search_users">Caută Prieteni</a> | 
-                <a href="/requests">Cereri Prietenie</a>
+                <a href="{{ url_for('dashboard') }}">Dashboard</a> | 
+                <a href="{{ url_for('search_users') }}">Caută Prieteni</a> | 
+                <a href="{{ url_for('view_requests') }}">Cereri Prietenie</a>
             </nav>
         </header>
 
@@ -26,7 +25,6 @@
             <ul class="track-list">
                 {% for track in tracks %}
                     <li class="track-item" style="display: flex; align-items: center; margin-bottom: 15px;">
-                        <!-- imaginea albumului pentru un aspect profi -->
                         <img src="{{ track.album.images[2].url }}" alt="Copertă" style="margin-right: 15px; border-radius: 4px;">
                         
                         <div class="track-details">
@@ -34,7 +32,6 @@
                             <span class="artist-name">by {{ track.artists[0].name }}</span>
                         </div>
 
-                        <!-- butonul de "Rate Album/Song" -->
                         <button class="rate-btn" style="margin-left: auto;">Rate ⭐</button>
                     </li>
                 {% endfor %}
@@ -42,7 +39,8 @@
         </main>
 
         <footer>
-            <a href="/" class="back-link">← Înapoi la pagina principală</a>
+            <!-- MODIFICAT: Trimite la Dashboard în loc de Index -->
+            <a href="{{ url_for('dashboard') }}" class="back-link">← Înapoi la Dashboard</a>
             <p>&copy; 2026 Connectify</p>
         </footer>
     </div>
