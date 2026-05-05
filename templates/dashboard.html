@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Connectify - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Salut, {{ user.email }}!</h1>
+
+        <div class="status-box">
+            {% if user.spotify_id %}
+                <p>✅ Cont Spotify conectat: <strong>{{ user.display_name }}</strong></p>
+                <div class="nav-links">
+                    <a href="{{ url_for('get_tracks') }}" class="btn-primary">Vezi Top Melodii</a>
+                    <a href="{{ url_for('search_users') }}" class="btn-secondary">Caută Prieteni</a>
+                    <a href="{{ url_for('view_friends') }}" class="btn-secondary">Lista de Prieteni</a>
+                </div>
+            {% else %}
+                <p>❌ Nu ai conectat Spotify încă.</p>
+                <a href="{{ url_for('connect_spotify') }}" class="btn-spotify" style="padding: 10px; background: #1DB954; color: white; text-decoration: none; border-radius: 20px; display: inline-block;">
+                    Conectează-te cu Spotify
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- --- ADAUGĂ ACEASTĂ SECȚIUNE PENTRU ADMIN --- -->
+        {% if user.is_admin %}
+        <div style="margin-top: 30px; padding: 15px; border: 2px dashed #333; border-radius: 10px; background: #fffbe6;">
+            <p><strong>🛡️ Zona Administrator</strong></p>
+            <a href="{{ url_for('admin_panel') }}" class="btn-primary" style="background: #333; color: white; text-decoration: none; padding: 8px 15px; border-radius: 5px; display: inline-block;">
+                Deschide Panou Admin
+            </a>
+        </div>
+        {% endif %}
+        <!-- -------------------------------------------- -->
+
+        <hr style="margin: 20px 0;">
+        <a href="{{ url_for('logout') }}" style="color: red;">Logout din aplicație</a>
+    </div>
+</body>
+</html>
