@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="ro">
+
 <head>
     <meta charset="UTF-8">
     <title>Connectify - Profilul Meu</title>
     <link rel="icon" type="/x-icon" href="static/favicon.ico">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <div class="profile-container">
         <header>
             <h1 class="logo">Connectify</h1>
             <nav>
-                <a href="{{ url_for('dashboard') }}">Dashboard</a> | 
-                <a href="{{ url_for('view_friends') }}">Listă Prieteni</a> | 
+                <a href="{{ url_for('dashboard') }}">Dashboard</a> |
+                <a href="{{ url_for('view_friends') }}">Listă Prieteni</a> |
                 <a href="{{ url_for('view_requests') }}">Cereri Prietenie</a>
             </nav>
         </header>
@@ -25,29 +27,28 @@
 
             <ul class="track-list">
                 {% for track in tracks %}
-                    <li class="track-item" style="display: flex; align-items: center; margin-bottom: 15px;">
-                        <img src="{{ track.album.images[2].url }}" alt="Copertă" style="margin-right: 15px; border-radius: 4px;">
-                    <li class="track-item">
-                        <img src="{{ track.album.images[2].url }}" alt="Copertă">
-                        
-                        <div class="track-details">
-                            <strong>{{ track.name }}</strong> <br>
-                            <span class="artist-name">by {{ track.artists[0].name }}</span>
-                        </div>
+                <li class="track-item" style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <img src="{{ track.album.images[2].url }}" alt="Copertă"
+                        style="margin-right: 15px; border-radius: 4px;">
 
-                        <button class="rate-btn" style="margin-left: auto;">Rate ⭐</button>
-                        <button class="rate-btn">Rate ⭐</button>
-                    </li>
+                    <div class="track-details">
+                        <strong>{{ track.name }}</strong> <br>
+                        <span class="artist-name">by {{ track.artists[0].name }}</span>
+                    </div>
+
+                    <button class="rate-btn" style="margin-left: auto;">Rate ⭐</button>
+                </li>
                 {% endfor %}
             </ul>
 
             <!-- SECȚIUNE NOUĂ: GESTIONARE CONT -->
             <hr>
-            
-            <section class="account-settings" >
-                <form action="{{ url_for('delete_self') }}" method="POST" onsubmit="return confirm('Sigur vrei să ștergi contul?');">
-                    <button type="submit">
-                        Șterge Contul Meu definitiv
+
+            <section class="account-settings" style="display: flex; justify-content: flex-end; padding: 20px 0;">
+                <form action="{{ url_for('delete_self') }}" method="POST"
+                    onsubmit="return confirm('Sigur vrei să ștergi contul?');">
+                    <button type="submit" class="delete-btn-styled">
+                        Șterge Contul
                     </button>
                 </form>
             </section>
@@ -60,4 +61,5 @@
         </footer>
     </div>
 </body>
+
 </html>
