@@ -1,0 +1,15 @@
+<header>
+    <div>
+        <a href="{{ url_for('index') }}">
+            <img src="{{ url_for('static', filename='logo_connectify.png') }}" 
+                 alt="Connectify Logo" 
+                 style="height: 80px; width: auto;">
+        </a>
+    </div>
+    <nav>
+        <a href="{{ url_for('get_tracks') }}" class="btn-primary">Dashboard</a>|
+        <a href="{{ url_for('dashboard') }}">Profil</a> |
+        <a href="{{ url_for('view_friends') }}">Listă Prieteni</a> |
+        <a href="{{ url_for('view_requests') }}">Cereri Prietenie</a>
+    </nav>
+</header>

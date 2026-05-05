@@ -9,15 +9,25 @@
 <body style="background-color: #121212; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
     <div class="container" style="max-width: 1000px; margin: auto; padding: 40px;">
         
-        <header style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e50991; padding-bottom: 20px; margin-bottom: 30px;">
-            <h1 style="color: white; margin: 0;"> Panou Administrare</h1>
-            <a href="{{ url_for('dashboard') }}" style="background-color: transparent; color: white; border: 1px solid white; padding: 10px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: 0.3s;">
-                ← Înapoi la Dashboard
-            </a>
-        </header>
+        <header>
+    <div>
+        <a href="{{ url_for('index') }}">
+            <img src="{{ url_for('static', filename='logo_connectify.png') }}" 
+                 alt="Connectify Logo" 
+                 style="height: 80px; width: auto;">
+        </a>
+    </div>
+    <nav>
+        <a href="{{ url_for('get_tracks') }}" class="btn-primary">Dashboard</a>|
+        <a href="{{ url_for('dashboard') }}">Profil</a> |
+        <a href="{{ url_for('view_friends') }}">Listă Prieteni</a> |
+        <a href="{{ url_for('view_requests') }}">Cereri Prietenie</a>
+    </nav>
+    <h1 style="color: white; margin: 0;"> Panou Administrare</h1>
+</header>
 
         <!-- Statistici rapide -->
-        <section class="stats" style="background: #1e1e1e; padding: 20px; border-radius: 12px; margin-bottom: 30px; border-left: 5px solid #e50991;">
+        <section class="stats" style="background: #1e1e1e; padding: 20px; border-radius: 12px; margin-top: 30px; margin-bottom: 30px; border-left: 5px solid #e50991;">
             <p style="margin: 0; font-size: 1.1em;">Total Melodii în Cache: <strong style="color: #e50991;">{{ total_songs }}</strong></p>
         </section>
 
@@ -69,10 +79,6 @@
                 </tbody>
             </table>
         </div>
-
-        <footer style="margin-top: 40px; text-align: center; color: #555; font-size: 0.9em;">
-            <p>&copy; 2026 Connectify - Administrare Sistem</p>
-        </footer>
     </div>
 </body>
 </html>

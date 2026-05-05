@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
+    <title>Caută Utilizatori</title>
+    <link rel="icon" type="/x-icon" href="static/favicon.ico">
+     <link rel="stylesheet" href="{{ url_for('static', filename='search_user.css') }}">
+</head>
+<body>
+    {%- with messages = get_flashed_messages(with_categories=true) -%}
+  {%- if messages -%}
+    {% for category, message in messages -%}
       <div class="alert alert-{{ category }}" style="
           padding: 15px; 
           margin-bottom: 20px; 
@@ -16,20 +21,10 @@
           text-align: center;">
         {{ message }}
       </div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
-    <title>Caută Utilizatori</title>
-    <link rel="icon" type="/x-icon" href="static/favicon.ico">
-     <link rel="stylesheet" href="{{ url_for('static', filename='search_user.css') }}">
-</head>
-<body>
-    <nav>
-        <a href="/get_tracks">Profil</a> | 
-        <a href="/search_users">Caută Prieteni</a> | 
-        <a href="/requests">Cereri Prietenie</a>
-    </nav>
-    <hr>
+    {%- endfor -%}
+  {%- endif -%}
+{%- endwith -%}
+    {% include 'header.html' %}
     <h1>Caută utilizatori Connectify</h1>
     <form action="/search_users" method="get">
         <input type="text" name="query" placeholder="Introdu nume utilizator...">
@@ -51,4 +46,5 @@
         <p>Nu am găsit niciun utilizator cu acest nume.</p>
     {% endif %}
 </body>
+
 </html>

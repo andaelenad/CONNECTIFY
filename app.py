@@ -148,7 +148,7 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login_app'))
     user = User.query.get(session['user_id'])
-    return render_template('dashboard.html', user=user)
+    return render_template('profile.html', user=user)
 
 @app.route('/logout')
 def logout():
@@ -225,7 +225,7 @@ def get_tracks():
     
     # trimitem datele catre profil.html
     tracks = results['items']
-    return render_template('profile.html', tracks=tracks)
+    return render_template('dashboard.html', tracks=tracks)
 
 # cautare utilizatori după display_name
 @app.route('/search_users', methods=['GET', 'POST'])

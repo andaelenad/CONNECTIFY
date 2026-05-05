@@ -8,13 +8,7 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1 class="logo">Connectify</h1>
-            <nav>
-                <a href="{{ url_for('dashboard') }}">Dashboard</a> |
-                <a href="{{ url_for('search_users') }}">Caută Prieteni</a>
-            </nav>
-        </header>
+        {% include 'header.html' %}
 
         <main>
             <h2>Lista de prieteni</h2>
@@ -37,10 +31,6 @@
                 <p>Încă nu ai prieteni în listă. <a href="{{ url_for('search_users') }}">Caută utilizatori aici.</a></p>
             {% endif %}
         </main>
-
-        <footer>
-            <a href="{{ url_for('dashboard') }}">← Înapoi la Dashboard</a>
-        </footer>
     </div>
 </body>
 </html>

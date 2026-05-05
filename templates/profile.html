@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ro">
-
 <head>
     <meta charset="UTF-8">
     <title>Connectify - Profilul Meu</title>
@@ -9,56 +8,36 @@
 </head>
 
 <body>
-    <div class="profile-container">
-        <header>
-            <h1 class="logo">Connectify</h1>
-            <nav>
-                <a href="{{ url_for('dashboard') }}">Dashboard</a> |
-                <a href="{{ url_for('view_friends') }}">Listă Prieteni</a> |
-                <a href="{{ url_for('view_requests') }}">Cereri Prietenie</a>
-            </nav>
-        </header>
+    <div class="container">
+        {% include 'header.html' %}
+        <h1>Salut, {{ user.email }}!</h1>
 
-        <main>
-            <section class="user-info">
-                <h2>Topul tău de piese:</h2>
-                <p>Acestea sunt melodiile care te definesc în acest moment.</p>
-            </section>
+        <div class="status-box">
+            {% if user.spotify_id %}
+                <p> Cont Spotify conectat: <strong>{{ user.display_name }}</strong></p>
+            {% else %}
+                <p> Nu ai conectat Spotify încă.</p>
+                <a href="{{ url_for('connect_spotify') }}" class="btn-spotify" style="padding: 10px; background: #e50991; color: white; text-decoration: none; border-radius: 20px; display: inline-block;">
+                    Conectează-te cu Spotify
+                </a>
+            {% endif %}
+        </div>
 
-            <ul class="track-list">
-                {% for track in tracks %}
-                <li class="track-item" style="display: flex; align-items: center; margin-bottom: 15px;">
-                    <img src="{{ track.album.images[2].url }}" alt="Copertă"
-                        style="margin-right: 15px; border-radius: 4px;">
+        <!-- ADMIN -->
+        {% if user.is_admin %}
+        <div style="margin-top: 40px; padding: 20px; background-color: #121212; border: 2px solid #e50991; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(229, 9, 145, 0.2);">
+            <p style="margin-bottom: 15px; font-weight: bold; letter-spacing: 1px;"> PANOU CONTROL ADMINISTRATOR</p>
+            <a href="{{ url_for('admin_panel') }}" style="background-color: #e50991; color: white; text-decoration: none; padding: 10px 20px; border-radius: 25px; display: inline-block; font-weight: bold; transition: 0.3s opacity;">
+                Deschide Panou Admin
+            </a>
+        </div>
+        {% endif %}
+        <!-- --------------------------------------- -->
 
-                    <div class="track-details">
-                        <strong>{{ track.name }}</strong> <br>
-                        <span class="artist-name">by {{ track.artists[0].name }}</span>
-                    </div>
-
-                    <button class="rate-btn" style="margin-left: auto;">Rate ⭐</button>
-                </li>
-                {% endfor %}
-            </ul>
-
-            <!-- SECȚIUNE NOUĂ: GESTIONARE CONT -->
-            <hr>
-
-            <section class="account-settings" style="display: flex; justify-content: flex-end; padding: 20px 0;">
-                <form action="{{ url_for('delete_self') }}" method="POST"
-                    onsubmit="return confirm('Sigur vrei să ștergi contul?');">
-                    <button type="submit" class="delete-btn-styled">
-                        Șterge Contul
-                    </button>
-                </form>
-            </section>
-        </main>
-
-        <footer>
-            <a href="{{ url_for('dashboard') }}" class="back-link">← Înapoi la Dashboard</a>
-            <p>&copy; 2026 Connectify</p>
-        </footer>
+        <hr style="margin: 40px 0; border: 0; border-top: 1px solid #333;">
+        <div style="text-align: center;">
+            <a href="{{ url_for('logout') }}" style="color: #666; text-decoration: none; font-size: 0.9em;">Logout din aplicație</a>
+        </div>
     </div>
 </body>
-
 </html>

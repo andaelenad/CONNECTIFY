@@ -1,5 +1,6 @@
 body {
-    background-color: #121212; /* Negru Spotify */
+    background-color: #121212;
+    /* Negru Spotify */
     color: white;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
@@ -15,7 +16,7 @@ body {
 
 .btn-spotify {
     display: inline-block;
-    background-color: #e50991; 
+    background-color: #e50991;
     color: white;
     padding: 15px 30px;
     text-decoration: none;
@@ -41,4 +42,18 @@ nav a {
     margin: 0 10px;
     font-weight: 500;
     transition: color 0.3s;
+}
+
+a {
+    color: white;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #e50991;
+    
+}
+
+td{
+    padding: 30px;
 }

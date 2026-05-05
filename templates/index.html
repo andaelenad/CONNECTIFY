@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ro">
+
 <head>
     <meta charset="UTF-8">
     <title>Connectify - Home</title>
@@ -7,34 +8,43 @@
     <!-- legatura cu fisierul CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <div class="container">
-        <header>
-            <h1 class="logo">Connectify</h1>
-        </header>
-        
+        {% include 'header.html' %}
+
         <main>
             <section class="hero">
                 <h1>Welcome to <b>Connectify!</b></h1>
-                <p>Creează-ți un cont pentru a vedea ce ascultă prietenii tăi și pentru a acorda note melodiilor preferate.</p>
-                
+                {% if session.get('user_id') %}
+                <!-- Ce vede utilizatorul dacă ESTE logat -->
+                <p>Ești conectat! <a href="{{ url_for('get_tracks') }}" class="btn-primary">
+                        Mergi la Dashboard
+                    </a> pentru a vedea noutățile.</p>
+                <div class="auth-buttons" style="margin-top: 20px;">
+                    <a href="{{ url_for('logout') }}" class="btn-secondary" style="margin-left: 10px; opacity: 0.8;">
+                        Logout
+                    </a>
+                </div>
+                {% else %}
+                <p>Creează-ți un cont pentru a vedea ce ascultă prietenii tăi și pentru a acorda note melodiilor
+                    preferate.</p>
+
                 <div class="auth-buttons" style="margin-top: 20px;">
                     <!-- Buton pentru Creare Cont Nou -->
                     <a href="{{ url_for('signup') }}" class="btn-primary" style="margin-right: 10px;">
-                        Creează Cont (Sign Up)
+                        Creează Cont
                     </a>
-                    
+
                     <!-- Buton pentru Logare in contul existent -->
                     <a href="{{ url_for('login_app') }}" class="btn-secondary">
-                        Loghează-te (Login)
+                        Loghează-te
                     </a>
                 </div>
+                {% endif %}
             </section>
         </main>
-
-        <footer>
-            <p>&copy; 2026 Connectify. Toate drepturile rezervate.</p>
-        </footer>
     </div>
 </body>
+
 </html>

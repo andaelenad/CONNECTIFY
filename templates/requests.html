@@ -6,12 +6,7 @@
      <link rel="stylesheet" href="{{ url_for('static', filename='requests.css') }}">
 </head>
 <body>
-    <nav>
-        <a href="/get_tracks">Profil</a> | 
-        <a href="/search_users">Caută Prieteni</a> | 
-        <a href="/requests">Cereri Prietenie</a>
-    </nav>
-    <hr>
+    {% include 'header.html' %}
     <h1>Cereri de prietenie primite</h1>
 
     {% if requesters %}
