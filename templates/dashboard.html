@@ -12,24 +12,26 @@
 
         <div class="status-box">
             {% if user.spotify_id %}
-                <p>✅ Cont Spotify conectat: <strong>{{ user.display_name }}</strong></p>
+                <p> Cont Spotify conectat: <strong>{{ user.display_name }}</strong></p>
                 <div class="nav-links">
-                    <a href="{{ url_for('get_tracks') }}" class="btn-primary">Profil</a>
-                    <a href="{{ url_for('search_users') }}" class="btn-secondary">Caută Prieteni</a>
+                    <nav>
+                    <a href="{{ url_for('get_tracks') }}" class="btn-primary">Profil</a>|
+                    <a href="{{ url_for('search_users') }}" class="btn-secondary">Caută Prieteni</a>|
                     <a href="{{ url_for('view_friends') }}" class="btn-secondary">Lista de Prieteni</a>
+                    </nav>
                 </div>
             {% else %}
-                <p>❌ Nu ai conectat Spotify încă.</p>
-                <a href="{{ url_for('connect_spotify') }}" class="btn-spotify" style="padding: 10px; background: #1DB954; color: white; text-decoration: none; border-radius: 20px; display: inline-block;">
+                <p> Nu ai conectat Spotify încă.</p>
+                <a href="{{ url_for('connect_spotify') }}" class="btn-spotify" style="padding: 10px; background: #e50991; color: white; text-decoration: none; border-radius: 20px; display: inline-block;">
                     Conectează-te cu Spotify
                 </a>
             {% endif %}
         </div>
 
-        <!-- --- ADAUGĂ ACEASTĂ SECȚIUNE PENTRU ADMIN --- -->
+        <!-- ADMIN -->
         {% if user.is_admin %}
         <div style="margin-top: 40px; padding: 20px; background-color: #121212; border: 2px solid #e50991; border-radius: 12px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(229, 9, 145, 0.2);">
-            <p style="margin-bottom: 15px; font-weight: bold; letter-spacing: 1px;">🛡️ PANOU CONTROL ADMINISTRATOR</p>
+            <p style="margin-bottom: 15px; font-weight: bold; letter-spacing: 1px;"> PANOU CONTROL ADMINISTRATOR</p>
             <a href="{{ url_for('admin_panel') }}" style="background-color: #e50991; color: white; text-decoration: none; padding: 10px 20px; border-radius: 25px; display: inline-block; font-weight: bold; transition: 0.3s opacity;">
                 Deschide Panou Admin
             </a>

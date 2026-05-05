@@ -23,13 +23,12 @@
             {% if friends %}
                 <ul style="list-style: none; padding: 0;">
                     {% for friend in friends %}
-                        <li style="background: #f4f4f4; margin-bottom: 10px; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <li style="background: #e50991; margin-bottom: 10px; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
                             <div>
                                 <strong>{{ friend.display_name if friend.display_name else "Utilizator fără nume" }}</strong>
                                 <br>
-                                <small style="color: #666;">{{ friend.email }}</small>
+                                <small style="color: #ffffff;">{{ friend.email }}</small>
                             </div>
-                            <!-- Aici poți adăuga un buton "Vezi Profil" mai târziu -->
                             <a href="#" class="btn-secondary" style="font-size: 12px;">Vezi Activitate</a>
                         </li>
                     {% endfor %}

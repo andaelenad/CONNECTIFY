@@ -34,3 +34,11 @@ body {
     color: #e50991;
     font-size: 3rem;
 }
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+    font-weight: 500;
+    transition: color 0.3s;
+}
