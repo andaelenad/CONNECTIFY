@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Connectify - Home</title>
-    <!-- Facem legătura cu fișierul CSS -->
+    <!-- legatura cu fisierul CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -17,8 +17,8 @@
                 <h1>Welcome to <b>Connectify!</b></h1>
                 <p>Descoperă ce spun prietenii despre muzica ta preferată.</p>
                 
-                <!-- Folosim variabila auth_url pe care o vom trimite din Flask -->
-                <a href="{{ auth_url }}" class="btn-spotify">
+                <!-- variabila auth_url pe care o vom trimite din Flask -->
+                       <a href="{{ auth_url }}" class="btn-spotify">
                     Loghează-te cu Spotify
                 </a>
             </section>
