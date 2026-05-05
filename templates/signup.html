@@ -16,6 +16,10 @@
     {% endfor %}
   {% endif %}
 {% endwith %}
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login+signup.css') }}">
+    <link rel="icon" type="/x-icon" href="static/favicon.ico">
+</head>
 <form action="/signup" method="POST">
     <h2>Creează cont Connectify</h2>
     <input type="email" name="email" placeholder="Email" required>

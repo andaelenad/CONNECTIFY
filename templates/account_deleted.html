@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Cont Șters - Connectify</title>
+    <link rel="icon" type="/x-icon" href="static/favicon.ico">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .success-container {
+            text-align: center;
+            margin-top: 100px;
+            padding: 40px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-signup {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 25px;
+            background-color: #1DB954; /* Verde Spotify */
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+        }
+        .btn-signup:hover {
+            background-color: #1ed760;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container" style="max-width: 500px; margin-left: auto; margin-right: auto;">
+        <h1>Contul a fost șters!</h1>
+        <p>Ne pare rău că ai plecat, dar toate datele tale au fost eliminate cu succes din sistemul nostru.</p>
+        
+        <!-- Butonul cerut pentru a reveni la Sign Up -->
+        <a href="{{ url_for('signup') }}" class="btn-signup">Creează un cont nou (Admin)</a>
+    </div>
+</body>
+</html>

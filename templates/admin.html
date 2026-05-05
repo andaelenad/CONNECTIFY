@@ -3,52 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <title>Connectify - Admin Panel</title>
+    <link rel="icon" type="/x-icon" href="static/favicon.ico">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-    <div class="container" style="max-width: 900px; margin: auto; padding: 20px;">
-        <header style="display: flex; justify-content: space-between; align-items: center;">
-            <h1>🛡️ Panou Administrare</h1>
-            <a href="{{ url_for('dashboard') }}" class="btn-secondary">Înapoi la Dashboard</a>
+<body style="background-color: #121212; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <div class="container" style="max-width: 1000px; margin: auto; padding: 40px;">
+        
+        <header style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e50991; padding-bottom: 20px; margin-bottom: 30px;">
+            <h1 style="color: white; margin: 0;">🛡️ Panou Administrare</h1>
+            <a href="{{ url_for('dashboard') }}" style="background-color: transparent; color: white; border: 1px solid white; padding: 10px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; transition: 0.3s;">
+                ← Înapoi la Dashboard
+            </a>
         </header>
 
-        <section class="stats" style="background: #f0f2f5; padding: 15px; border-radius: 10px; margin: 20px 0;">
-            <p>Total Melodii în Cache: <strong>{{ total_songs }}</strong></p>
+        <!-- Statistici rapide -->
+        <section class="stats" style="background: #1e1e1e; padding: 20px; border-radius: 12px; margin-bottom: 30px; border-left: 5px solid #e50991;">
+            <p style="margin: 0; font-size: 1.1em;">Total Melodii în Cache: <strong style="color: #e50991;">{{ total_songs }}</strong></p>
         </section>
 
-        <h3>Utilizatori Înregistrați</h3>
-        <table border="1" style="width: 100%; border-collapse: collapse; text-align: left;">
-            <thead style="background: #333; color: white;">
-                <tr>
-                    <th style="padding: 10px;">ID</th>
-                    <th>Email</th>
-                    <th>Nume Spotify</th>
-                    <th>Status Admin</th>
-                    <th>Acțiuni</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in users %}
-                <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 10px;">{{ u.id }}</td>
-                    <td>{{ u.email }}</td>
-                    <td>{{ u.display_name if u.display_name else "❌ Neconectat" }}</td>
-                    <td>{{ "✅ Admin" if u.is_admin else "👤 User" }}</td>
-                    <td>
-                        {% if u.id != session['user_id'] %}
-                            <a href="{{ url_for('delete_user', uid=u.id) }}" 
-                               onclick="return confirm('Ești sigur că vrei să ștergi acest utilizator?')"
-                               style="color: red; text-decoration: none; font-weight: bold;">
-                                Șterge
-                            </a>
-                        {% else %}
-                            <span style="color: #999;">(Tu)</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <h3 style="margin-bottom: 20px; letter-spacing: 1px;">UTILIZATORI ÎNREGISTRAȚI</h3>
+        
+        <div style="background: #1e1e1e; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="background-color: #e50991; color: white;">
+                        <th style="padding: 15px;">ID</th>
+                        <th>Email</th>
+                        <th>Nume Spotify</th>
+                        <th>Status</th>
+                        <th style="text-align: center;">Acțiuni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr style="border-bottom: 1px solid #333; transition: background 0.2s;" onmouseover="this.style.background='#252525'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 15px; color: #999;">{{ u.id }}</td>
+                        <td style="font-weight: 500;">{{ u.email }}</td>
+                        <td>
+                            {% if u.display_name %}
+                                <span style="color: #1DB954;">{{ u.display_name }}</span>
+                            {% else %}
+                                <span style="color: #666; font-style: italic;">Neconectat</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.is_admin %}
+                                <span style="background: rgba(229, 9, 145, 0.2); color: #e50991; padding: 4px 10px; border-radius: 15px; font-size: 0.85em; font-weight: bold;">ADMIN</span>
+                            {% else %}
+                                <span style="color: #999; font-size: 0.85em;">USER</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if u.id != session['user_id'] %}
+                                <a href="{{ url_for('delete_user', uid=u.id) }}" 
+                                   onclick="return confirm('ATENȚIE: Ștergerea este definitivă! Continui?')"
+                                   style="color: #ff4444; text-decoration: none; font-weight: bold; font-size: 0.9em; padding: 5px 10px; border: 1px solid #ff4444; border-radius: 5px;">
+                                    Șterge
+                                </a>
+                            {% else %}
+                                <span style="color: #555; font-size: 0.9em;">(Tu)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <footer style="margin-top: 40px; text-align: center; color: #555; font-size: 0.9em;">
+            <p>&copy; 2026 Connectify - Administrare Sistem</p>
+        </footer>
     </div>
 </body>
 </html>
