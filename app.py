@@ -189,7 +189,7 @@ def get_tracks():
         return redirect(url_for('connect_spotify'))
     
     sp = spotipy.Spotify(auth=token_info['access_token'])
-    results = sp.current_user_top_tracks(limit=5, time_range='short_term')
+    results = sp.current_user_top_tracks(limit=5, time_range='medium_term')
     
     # trimitem datele catre profil.html
     tracks = results['items']
@@ -298,6 +298,6 @@ def delete_self():
 
 if __name__ == '__main__':
     with app.app_context():
-        #db.drop_all() # rulează o dată dacă schimbi structura tabelelor
-        db.create_all() # asta forteaza crearea tabelelor la pornire
+        #db.drop_all()
+        db.create_all()
     app.run(debug=True)
