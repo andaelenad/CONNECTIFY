@@ -4,6 +4,7 @@ ENV/
 env/
 
 # Fișiere de configurare privată (AICI SUNT CHEILE TALE SPOTIFY!)
+.cache
 .env
 
 # Cache-ul de Python (fișiere temporare generate automat)
