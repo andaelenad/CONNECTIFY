@@ -103,6 +103,17 @@ def signup():
         db.session.commit()
         
         flash("Cont creat cu succes! Te poți loga.", "success")
+        if User.query.filter_by(email=email).first():
+            return "Email-ul există deja!"
+        new_user = User(email=email)
+        if email == "ruricojocaru@gmail.com": 
+            new_user.is_admin = True
+        if email == "sabinabrinzei277@gmail.com": 
+            new_user.is_admin = True
+
+        new_user.set_password(password)
+        db.session.add(new_user)
+        db.session.commit()
         return redirect(url_for('login_app'))
     return render_template('signup.html')
 
@@ -176,6 +187,13 @@ def view_friends():
         (Friendship.status == 'accepted')
     ).all()
 
+
+    # și unde statusul este 'accepted'
+    friendships = Friendship.query.filter(
+        ((Friendship.user_id == session['user_id']) | (Friendship.friend_id == session['user_id'])),
+        (Friendship.status == 'accepted')
+    ).all()
+
     friends_list = []
     for f in friendships:
         # Dacă eu sunt user_id, prietenul este friend_id. Și invers.
@@ -197,7 +215,7 @@ def get_tracks():
         return redirect(url_for('connect_spotify'))
     
     sp = spotipy.Spotify(auth=token_info['access_token'])
-    results = sp.current_user_top_tracks(limit=5, time_range='short_term')
+    results = sp.current_user_top_tracks(limit=5, time_range='medium_term')
     
     # trimitem datele catre profil.html
     tracks = results['items']
@@ -226,6 +244,9 @@ def add_friend(friend_id):
         return redirect(url_for('search_users'))
 
     
+    if 'user_id' not in session: return redirect(url_for('login_app'))
+    
+    # verificare daca exista relatie deja
     exists = Friendship.query.filter_by(user_id=session['user_id'], friend_id=friend_id).first()
     if not exists:
         new_friendship = Friendship(user_id=session['user_id'], friend_id=friend_id, status='pending')
@@ -295,4 +316,28 @@ if __name__ == '__main__':
     with app.app_context():
         #db.drop_all() # rulează o dată dacă schimbi structura tabelelor
         db.create_all() # asta forteaza crearea tabelelor la pornire
+@app.route('/delete_my_account', methods=['POST'])
+def delete_self():
+    if 'user_id' not in session:
+        return redirect(url_for('login_app'))
+
+    uid = session['user_id']
+    user = User.query.get(uid)
+
+    if user:
+        # Curățăm tot ce ține de acest user
+        Friendship.query.filter((Friendship.user_id == uid) | (Friendship.friend_id == uid)).delete()
+        Rating.query.filter_by(user_id=uid).delete()
+        
+        db.session.delete(user)
+        db.session.commit()
+        session.clear() # Foarte important: scoatem user-ul din sesiune
+        return render_template('account_deleted.html')
+    
+    return "Eroare la ștergere", 404
+
+if __name__ == '__main__':
+    with app.app_context():
+        #db.drop_all()
+        db.create_all()
     app.run(debug=True)

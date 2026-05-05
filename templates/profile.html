@@ -26,6 +26,8 @@
                 {% for track in tracks %}
                     <li class="track-item" style="display: flex; align-items: center; margin-bottom: 15px;">
                         <img src="{{ track.album.images[2].url }}" alt="Copertă" style="margin-right: 15px; border-radius: 4px;">
+                    <li class="track-item">
+                        <img src="{{ track.album.images[2].url }}" alt="Copertă">
                         
                         <div class="track-details">
                             <strong>{{ track.name }}</strong> <br>
@@ -33,9 +35,21 @@
                         </div>
 
                         <button class="rate-btn" style="margin-left: auto;">Rate ⭐</button>
+                        <button class="rate-btn">Rate ⭐</button>
                     </li>
                 {% endfor %}
             </ul>
+
+            <!-- SECȚIUNE NOUĂ: GESTIONARE CONT -->
+            <hr>
+            
+            <section class="account-settings" >
+                <form action="{{ url_for('delete_self') }}" method="POST" onsubmit="return confirm('Sigur vrei să ștergi contul?');">
+                    <button type="submit">
+                        Șterge Contul Meu definitiv
+                    </button>
+                </form>
+            </section>
         </main>
 
         <footer>
