@@ -57,3 +57,7 @@ a:hover {
 td{
     padding: 30px;
 }
+
+a.fundal-roz:hover{
+    color:#121212;
+}
