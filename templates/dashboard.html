@@ -13,7 +13,7 @@
             {% if user.spotify_id %}
                 <p>✅ Cont Spotify conectat: <strong>{{ user.display_name }}</strong></p>
                 <div class="nav-links">
-                    <a href="{{ url_for('get_tracks') }}" class="btn-primary">Vezi Top Melodii</a>
+                    <a href="{{ url_for('get_tracks') }}" class="btn-primary">Profil</a>
                     <a href="{{ url_for('search_users') }}" class="btn-secondary">Caută Prieteni</a>
                     <a href="{{ url_for('view_friends') }}" class="btn-secondary">Lista de Prieteni</a>
                 </div>
