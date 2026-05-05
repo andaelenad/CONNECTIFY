@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Connectify - Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container" style="max-width: 900px; margin: auto; padding: 20px;">
+        <header style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>🛡️ Panou Administrare</h1>
+            <a href="{{ url_for('dashboard') }}" class="btn-secondary">Înapoi la Dashboard</a>
+        </header>
+
+        <section class="stats" style="background: #f0f2f5; padding: 15px; border-radius: 10px; margin: 20px 0;">
+            <p>Total Melodii în Cache: <strong>{{ total_songs }}</strong></p>
+        </section>
+
+        <h3>Utilizatori Înregistrați</h3>
+        <table border="1" style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead style="background: #333; color: white;">
+                <tr>
+                    <th style="padding: 10px;">ID</th>
+                    <th>Email</th>
+                    <th>Nume Spotify</th>
+                    <th>Status Admin</th>
+                    <th>Acțiuni</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px;">{{ u.id }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.display_name if u.display_name else "❌ Neconectat" }}</td>
+                    <td>{{ "✅ Admin" if u.is_admin else "👤 User" }}</td>
+                    <td>
+                        {% if u.id != session['user_id'] %}
+                            <a href="{{ url_for('delete_user', uid=u.id) }}" 
+                               onclick="return confirm('Ești sigur că vrei să ștergi acest utilizator?')"
+                               style="color: red; text-decoration: none; font-weight: bold;">
+                                Șterge
+                            </a>
+                        {% else %}
+                            <span style="color: #999;">(Tu)</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
