@@ -1,0 +1,35 @@
+name: Connectify CI Tests
+
+# automatizarea porneste la fiecare push sau pull request 
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # copiaza codul din repository pe masina virtuala
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # instalează Python
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    # instaleaza bibliotecile necesare din requirements.txt
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    # ruleaza testele din teste_unitest.py
+    - name: Run Unit Tests
+      env:
+        # secretele salvate pe git
+        SPOTIPY_CLIENT_ID: ${{ secrets.SPOTIPY_CLIENT_ID }}
+        SPOTIPY_CLIENT_SECRET: ${{ secrets.SPOTIPY_CLIENT_SECRET }}
+        SPOTIPY_REDIRECT_URI: ${{ secrets.SPOTIPY_REDIRECT_URI }}
+      run: |
+        python teste_unitest.py
