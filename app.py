@@ -1,5 +1,4 @@
 import os
-# AM ADAUGAT render_template AICI
 from flask import Flask, request, url_for, session, redirect, render_template, flash
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -15,8 +14,8 @@ app = Flask(__name__)
 app.secret_key = "cheie_secreta_pentru_proiect_connectify"
 app.config['SESSION_COOKIE_NAME'] = 'Connectify_Session'
 
-# configurări pt baza de date
-# Am actualizat URI-ul pentru Aiven (PostgreSQL)
+# configurari pt baza de date
+# actualizat URI-ul pentru Aiven (PostgreSQL)
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://avnadmin:AVNS_dlwEpYk7NtFpIKxzuWF@pg-6647a18-rurig.d.aivencloud.com:26923/defaultdb?sslmode=require"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -25,7 +24,7 @@ class DatabaseSingleton:
 
     def __new__(cls, app=None):
         if cls._instance is None:
-            # Dacă _instance este None, înseamnă că e prima dată când apelăm clasa
+            # daca _instance este None, e prima data cand apelam clasa
             cls._instance = SQLAlchemy(app)
         return cls._instance
 
@@ -58,6 +57,7 @@ class SongCache(db.Model):
 class Rating(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     score = db.Column(db.Integer, nullable=False) # nota 1-5
+    comment = db.Column(db.String(500), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     spotify_item_id = db.Column(db.String(100), db.ForeignKey('song_cache.spotify_id'), nullable=False)
 
@@ -66,6 +66,14 @@ class Friendship(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     friend_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     status = db.Column(db.String(20), default='pending') # pending, accepted, rejected
+
+class UserTopSong(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    spotify_id = db.Column(db.String(100), db.ForeignKey('song_cache.spotify_id'), nullable=False)
+    
+    # relatie pentru a accesa direct detaliile piesei din cache
+    song = db.relationship('SongCache', backref='user_tops', lazy=True)
 
 # functionalitati app
 def create_spotify_oauth():
@@ -87,8 +95,8 @@ def get_token():
         session['token_info'] = token_info
     return token_info
 
-# rute login/signup
 
+# rute login/signup
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
@@ -143,19 +151,73 @@ def login_app():
         return "Login eșuat!"
     return render_template('login.html')
 
+#dashboard cu top cantece + ratinguri
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login_app'))
+        
     user = User.query.get(session['user_id'])
-    return render_template('profile.html', user=user)
+    if not user:
+        session.clear()
+        return redirect(url_for('login_app'))
+    
+    tracks = []
+    token_info = get_token()
+    
+    # aducem piesele live din API
+    if token_info:
+        try:
+            sp = spotipy.Spotify(auth=token_info['access_token'])
+            results = sp.current_user_top_tracks(limit=5, time_range='medium_term')
+            tracks = results['items']
+            
+            # API-ul ne-a dat piese => actualizam tabela de top din DB
+            if tracks:
+                UserTopSong.query.filter_by(user_id=user.id).delete()
+                db.session.commit()
+                
+                for track in tracks:
+                    song = SongCache.query.get(track['id'])
+                    if not song:
+                        song = SongCache(
+                            spotify_id=track['id'],
+                            name=track['name'],
+                            artist=track['artists'][0]['name'],
+                            image_url=track['album']['images'][0]['url'] if track['album']['images'] else ''
+                        )
+                        db.session.add(song)
+                        db.session.commit()
+                    
+                    top_mapping = UserTopSong(user_id=user.id, spotify_id=track['id'])
+                    db.session.add(top_mapping)
+                db.session.commit()
+        except Exception as e:
+            print(f"A intervenit o mică eroare la conexiunea live cu Spotify: {e}")
+
+    if not tracks and user.spotify_id:
+        top_mappings = UserTopSong.query.filter_by(user_id=user.id).limit(5).all()
+        tracks = []
+        for m in top_mappings:
+            tracks.append({
+                'id': m.song.spotify_id,
+                'name': m.song.name,
+                'artists': [{'name': m.song.artist}],
+                'album': {'images': [{'url': m.song.image_url}]}
+            })
+
+    # preluare toate rating-urile pentru sectiunea de jos
+    ratings = Rating.query.filter_by(user_id=user.id).all()
+    user_rated_songs = {r.spotify_item_id: r.score for r in ratings}
+
+    return render_template('dashboard.html', user=user, tracks=tracks, ratings=ratings, rated_songs=user_rated_songs)
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# 1. RUTA PRINCIPALĂ
+# 1. RUTA PRINCIPALA
 @app.route('/')
 def index():
     # trimite la index.html (acum pagina de prezentare)
@@ -194,7 +256,7 @@ def callback():
 def view_friends():
     if 'user_id' not in session:
         return redirect(url_for('login_app'))
-    # și unde statusul este 'accepted'
+    # unde statusul este 'accepted'
     friendships = Friendship.query.filter(
         ((Friendship.user_id == session['user_id']) | (Friendship.friend_id == session['user_id'])),
         (Friendship.status == 'accepted')
@@ -202,7 +264,6 @@ def view_friends():
 
     friends_list = []
     for f in friendships:
-        # Dacă eu sunt user_id, prietenul este friend_id. Și invers.
         if f.user_id == session['user_id']:
             friend = User.query.get(f.friend_id)
         else:
@@ -213,27 +274,13 @@ def view_friends():
 
     return render_template('friends.html', friends=friends_list)
 
-# 3. RUTA PROFIL 
-@app.route('/get_tracks')
-def get_tracks():
-    token_info = get_token()
-    if not token_info:
-        return redirect(url_for('connect_spotify'))
-    
-    sp = spotipy.Spotify(auth=token_info['access_token'])
-    results = sp.current_user_top_tracks(limit=5, time_range='medium_term')
-    
-    # trimitem datele catre profil.html
-    tracks = results['items']
-    return render_template('dashboard.html', tracks=tracks)
-
-# cautare utilizatori după display_name
+# cautare utilizatori dupa display_name
 @app.route('/search_users', methods=['GET', 'POST'])
 def search_users():
     query = request.args.get('query')
     users = []
     if query:
-        # Nu ne afișăm pe noi înșine în căutări
+        # userul propriu nu apare la cautare
         users = User.query.filter(User.display_name.contains(query), User.id != session.get('user_id')).all()
     
     return render_template('search_users.html', users=users)
@@ -268,7 +315,7 @@ def view_requests():
 
     # cererile unde ID-ul meu este la "friend_id" (cineva m-a adaugat pe mine)
     pending_requests = Friendship.query.filter_by(friend_id=session['user_id'], status='pending').all()
-    # trebuie join manual sau să cautam userii care au trimis cererea
+    # trebuie join manual sau sa cautam userii care au trimis cererea
     requesters = [User.query.get(req.user_id) for req in pending_requests]
     
     return render_template('requests.html', requesters=requesters)
@@ -287,32 +334,30 @@ def accept_friend(requester_id):
 
 @app.route('/admin_panel')
 def admin_panel():
-    # 1. Verificăm dacă user-ul este logat
+    # verificam daca user-ul este logat
     if 'user_id' not in session:
         return redirect(url_for('login_app'))
     
-    # 2. Verificăm dacă user-ul curent are drepturi de admin
+    # are drept admin?
     current_user = User.query.get(session['user_id'])
     if not current_user or not current_user.is_admin:
         return "Acces interzis! Trebuie să fii administrator pentru a vedea această pagină.", 403
 
-    # 3. Luăm toți utilizatorii din baza de date Aiven
+    # toti utilizatorii din baza de date Aiven
     all_users = User.query.all()
-    # Numărăm câte melodii avem salvate în total
     total_cached_songs = SongCache.query.count()
     
     return render_template('admin.html', users=all_users, total_songs=total_cached_songs)
 
 @app.route('/admin/delete_user/<int:uid>')
 def delete_user(uid):
-    # Verificare de securitate (să nu șteargă cineva prin URL fără să fie admin)
+    # verificare de securitate (sa nu stearga cineva prin URL fara sa fie admin)
     current_user = User.query.get(session.get('user_id'))
     if not current_user or not current_user.is_admin:
         return "Neautorizat", 403
 
     user_to_delete = User.query.get(uid)
     if user_to_delete:
-        # Ștergem și prieteniile/rating-urile asociate dacă e cazul (depinde de setup-ul bazei de date)
         db.session.delete(user_to_delete)
         db.session.commit()
     
@@ -327,16 +372,114 @@ def delete_self():
     user = User.query.get(uid)
 
     if user:
-        # Curățăm tot ce ține de acest user
+        # stergem tot ce tine de acest user: prietenii, ratinguri, topuri
         Friendship.query.filter((Friendship.user_id == uid) | (Friendship.friend_id == uid)).delete()
         Rating.query.filter_by(user_id=uid).delete()
         
         db.session.delete(user)
         db.session.commit()
-        session.clear() # Foarte important: scoatem user-ul din sesiune
+        session.clear() # scoatem user-ul din sesiune
         return render_template('account_deleted.html')
     
     return "Eroare la ștergere", 404
+
+# search cantece
+@app.route('/search_songs', methods=['GET'])
+def search_songs():
+    if 'user_id' not in session:
+        return redirect(url_for('login_app'))
+    
+    query = request.args.get('query')
+    tracks = []
+    user_rated_songs = {} # dictionar gol implicit
+
+    # extragem rating-urile salvate de utilizatorul curent în baza de date Aiven
+    current_user_id = session['user_id']
+    ratings = Rating.query.filter_by(user_id=current_user_id).all()
+    
+    # transformam lista intr-un dictionar pentru cautare rapida în HTML: { id_piesa: nota }
+    user_rated_songs = {r.spotify_item_id: r.score for r in ratings}
+    
+    if query:
+        token_info = get_token()
+        if not token_info:
+            return redirect(url_for('connect_spotify'))
+        
+        sp = spotipy.Spotify(auth=token_info['access_token'])
+        results = sp.search(q=query, limit=10, type='track')
+        tracks = results['tracks']['items']
+        
+    # trimitem si `user_rated_songs` catre template-ul HTML
+    return render_template('search_songs.html', tracks=tracks, query=query, rated_songs=user_rated_songs)
+
+# rate la cantece
+@app.route('/rate_song', methods=['POST'])
+def rate_song():
+    if 'user_id' not in session:
+        return redirect(url_for('login_app'))
+    
+    user_id = session['user_id']
+    spotify_id = request.form.get('spotify_id')
+    name = request.form.get('name')
+    artist = request.form.get('artist')
+    image_url = request.form.get('image_url')
+    score = int(request.form.get('score'))
+    comment = request.form.get('comment') 
+
+    # verific/salvez în SongCache
+    song = SongCache.query.get(spotify_id)
+    if not song:
+        song = SongCache(spotify_id=spotify_id, name=name, artist=artist, image_url=image_url)
+        db.session.add(song)
+        db.session.commit()
+
+    # 2. exista deja review?
+    existing_rating = Rating.query.filter_by(user_id=user_id, spotify_item_id=spotify_id).first()
+    
+    if existing_rating:
+        existing_rating.score = score
+        existing_rating.comment = comment # update com vechi
+        flash(f"Ai actualizat recenzia pentru '{name}'!", "success")
+    else:
+        # Cream rating nou updatat
+        new_rating = Rating(score=score, comment=comment, user_id=user_id, spotify_item_id=spotify_id)
+        db.session.add(new_rating)
+        flash(f"Ai adăugat o recenzie pentru '{name}'!", "success")
+        
+    db.session.commit()
+    
+    query_context = request.form.get('current_query')
+    if query_context is not None and query_context != "":
+        return redirect(url_for('search_songs', query=query_context))
+    else:
+        return redirect(url_for('dashboard'))
+
+@app.route('/friend/profile/<int:friend_id>')
+def view_friend_profile(friend_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login_app'))
+        
+    current_user_id = session['user_id']
+    
+    # verificare prietenie
+    is_friend = Friendship.query.filter(
+        ((Friendship.user_id == current_user_id) & (Friendship.friend_id == friend_id)) |
+        ((Friendship.user_id == friend_id) & (Friendship.friend_id == current_user_id)),
+        Friendship.status == 'accepted'
+    ).first()
+    
+    if not is_friend:
+        flash("Nu poți vizualiza profilul unui utilizator care nu îți este prieten!", "danger")
+        return redirect(url_for('view_friends'))
+        
+    friend = User.query.get_or_404(friend_id)
+    friend_ratings = Rating.query.filter_by(user_id=friend_id).all()
+    
+    # EXTRAGEM STRICT TOPUL SALVAT AL PRIETENULUI
+    top_mappings = UserTopSong.query.filter_by(user_id=friend_id).limit(5).all()
+    friend_tracks = [m.song for m in top_mappings] # extragem obiectele piese din relatyie
+
+    return render_template('friend_profile.html', friend=friend, ratings=friend_ratings, tracks=friend_tracks)
 
 if __name__ == '__main__':
     with app.app_context():

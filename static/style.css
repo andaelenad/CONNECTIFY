@@ -61,3 +61,14 @@ td{
 a.fundal-roz:hover{
     color:#121212;
 }
+
+button:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+    transition: 0.2s;
+}
+
+/* Stil pentru input-uri când sunt selectate */
+input:focus, select:focus {
+    outline: 2px solid #e50991;
+}

@@ -14,16 +14,31 @@
             <h2>Lista de prieteni</h2>
             <hr>
 
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div style="padding: 10px; margin-bottom: 20px; border-radius: 8px; background-color: #ff3333; color: white; font-weight: bold;">
+                      {{ message }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
             {% if friends %}
                 <ul style="list-style: none; padding: 0;">
                     {% for friend in friends %}
                         <li style="background: #e50991; margin-bottom: 10px; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
+                            <div style="text-align: left;">
                                 <strong>{{ friend.display_name if friend.display_name else "Utilizator fără nume" }}</strong>
                                 <br>
                                 <small style="color: #ffffff;">{{ friend.email }}</small>
                             </div>
-                            <a class="fundal-roz" href="#" class="btn-secondary" style="font-size: 12px;">Vezi Activitate</a>
+                            
+                            <a href="{{ url_for('view_friend_profile', friend_id=friend.id) }}" 
+                               class="fundal-roz" 
+                               style="font-size: 13px; font-weight: bold; background: #121212; color: white; padding: 8px 16px; border-radius: 20px; text-decoration: none; transition: 0.2s;">
+                               Vezi Activitate
+                            </a>
                         </li>
                     {% endfor %}
                 </ul>
