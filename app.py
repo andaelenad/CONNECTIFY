@@ -125,7 +125,7 @@ def signup():
         flash("Cont creat cu succes! Te poți loga.", "success")
         if email == "ruricojocaru@gmail.com": 
             new_user.is_admin = True
-        if email == "sabinabrinzei277@gmail.com": 
+        if email == "sabinamaria2005@gmail.com": 
             new_user.is_admin = True
 
         new_user.set_password(password)
@@ -167,7 +167,6 @@ def dashboard():
     tracks = []
     token_info = get_token()
     
-    # 1. Preluare piese din Spotify live / Cache (Neschimbat)
     if token_info:
         try:
             sp = spotipy.Spotify(auth=token_info['access_token'])
@@ -210,10 +209,34 @@ def dashboard():
     ratings = Rating.query.filter_by(user_id=user.id).all()
     user_rated_songs = {r.spotify_item_id: r.score for r in ratings}
     
+    return render_template('dashboard.html', 
+                           user=user, 
+                           tracks=tracks, 
+                           ratings=ratings, 
+                           rated_songs=user_rated_songs)
+
+
+# RUTA NOUA: Pagina separata pentru Recomandari AI
+@app.route('/recomandari')
+def recomandari():
+    if 'user_id' not in session:
+        return redirect(url_for('login_app'))
+        
+    # Reparat: Folosim db.session.get() în loc de query.get() pentru a elimina avertismentele din consolă
+    user = db.session.get(User, session['user_id'])
+    if not user:
+        session.clear()
+        return redirect(url_for('login_app'))
+        
+    token_info = get_token()
+    ratings = Rating.query.filter_by(user_id=user.id).all()
+    user_rated_songs = {r.spotify_item_id: r.score for r in ratings}
+    
     ai_tracks_details = []
     tip_sursa = ""
     eroare_ai = None
 
+    # Extragere preferințe (Rating-uri mari sau Top Cântece)
     high_ratings = Rating.query.filter(Rating.user_id == user.id, Rating.score >= 4).all()
     if high_ratings:
         tip_sursa = "rating-urile tale de top"
@@ -227,44 +250,42 @@ def dashboard():
 
     if surse_muzica:
         text_piese = "\n- ".join(surse_muzica)
-        
         try:
-            # Creăm un client explicit local pentru a evita problemele de mediu virtual
             from ollama import Client
             local_client = Client(host='http://localhost:11434')
             
+            # Reparat: Indentarea a fost corectată pentru blocul de chat
             response = local_client.chat(
                 model='llama3',
                 messages=[
                     {
                         'role': 'system',
                         'content': (
-                            "Ești un expert muzical genial. Analizează piesele și recomandă exact 3 piese noi, "
-                            "diferite ca nume, compatibile ca gen. Returnează doar cele 3 piese, separate prin '|||'. "
-                            "Exemplu: Piesă 1 - Artist 1 ||| Piesă 2 - Artist 2 ||| Piesă 3 - Artist 3"
+                            "Ești un robot programat să returneze STRICT text în formatul cerut. "
+                            "NU saluta, NU oferi explicații, NU scrie text înainte sau după piese. "
+                            "Analizează piesele utilizatorului și returnează EXACT 3 recomandări separate prin '|||'.\n"
+                            "Exemplu de răspuns valid:\n"
+                            "The 1975 - People ||| Arctic Monkeys - Do I Look Like a Fool? ||| Glass Animals - Black Mambo"
                         )
                     },
                     {
                         'role': 'user',
-                        'content': f"Recomandă 3 piese pentru cineva care ascultă:\n{text_piese}"
+                        'content': f"Recomandă exact 3 piese pentru cineva care ascultă:\n{text_piese}"
                     }
                 ],
                 options={
-                    'temperature': 0.8,
+                    'temperature': 0.2, 
                     'top_p': 0.9
                 }
             )
             
             text_brut = response['message']['content'].strip()
-            
             liste_nume_piese = [piesa.strip() for piesa in text_brut.split('|||') if piesa.strip()]
-            
             liste_nume_piese = liste_nume_piese[:3]
             
             if token_info and liste_nume_piese:
                 sp = spotipy.Spotify(auth=token_info['access_token'])
                 for nume_piesa in liste_nume_piese:
-                    # Curățăm eventuale ghilimele rătăcite pe care le mai pune AI-ul
                     nume_curat = nume_piesa.replace('"', '').replace("'", "")
                     search_results = sp.search(q=nume_curat, limit=1, type='track')
                     if search_results['tracks']['items']:
@@ -274,15 +295,14 @@ def dashboard():
             print(f"Eroare Ollama Local: {e}")
             eroare_ai = "🤖 Aplicația nu a putut comunica cu modelul AI local. Asigură-te că Ollama rulează în fundal!"
 
-    return render_template('dashboard.html', 
-                           user=user, 
-                           tracks=tracks, 
-                           ratings=ratings, 
-                           rated_songs=user_rated_songs, 
+    return render_template('recomandari.html', 
+                           user=user,
                            ai_tracks=ai_tracks_details, 
-                           sursa=tip_sursa,
-                           eroare_ai=eroare_ai)
-    
+                           sursa=tip_sursa, 
+                           eroare_ai=eroare_ai,
+                           rated_songs=user_rated_songs,
+                           ratings=ratings)
+
 @app.route('/logout')
 def logout():
     session.clear()

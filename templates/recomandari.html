@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Connectify - Recomandări AI</title>
+    <link rel="icon" type="/x-icon" href="static/favicon.ico">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            height: auto !important;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .section-title {
+            color: #e50991;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            text-align: left;
+            margin-top: 40px;
+        }
+
+        .item-box {
+            display: flex;
+            align-items: center;
+            background: #1e1e1e;
+            padding: 12px 20px;
+            border-radius: 8px;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+        
+        .alert-warning {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ffc107;
+            text-align: left;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        {% include 'header.html' %}
+
+        <h1>Recomandări Muzicale Inteligente</h1>
+        <p style="color: #bbb;">Modelul local AI analizează activitatea ta pentru a-ți descoperi noi piese preferate.</p>
+
+        <div style="margin-top: 30px; text-align: left;">
+            {% if ai_tracks %}
+                <p style="color: #aaa;">Piese alese special pentru tine, bazate pe <strong style="color: #e50991;">{{ sursa }}</strong>:</p>
+
+                <div style="margin-top: 15px;">
+                    {% if eroare_ai %}
+                        <div class="alert-warning">
+                            {{ eroare_ai }}
+                        </div>
+                    {% else %}
+                        {% for track in ai_tracks %}
+                        <div class="item-box">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                {% if track.album.images %}
+                                    <img src="{{ track.album.images[0].url }}" alt="Copertă" style="width: 50px; height: 50px; border-radius: 4px; object-fit: cover;">
+                                {% else %}
+                                    <div style="width: 50px; height: 50px; background: #333; border-radius: 4px;"></div>
+                                {% endif %}
+                                
+                                <div>
+                                    <strong style="color: white; display: block;">{{ track.name }}</strong>
+                                    <span style="color: #888; font-size: 0.85rem;">by {{ track.artists[0].name }}</span>
+
+                                    {% if rated_songs and track.id in rated_songs %}
+                                    <span style="display: inline-block; margin-top: 4px; background: rgba(229, 9, 145, 0.15); color: #e50991; font-size: 0.72rem; font-weight: bold; padding: 1px 6px; border-radius: 10px; border: 1px solid #e50991;">
+                                        Notă acordată: {{ rated_songs[track.id] }} ★
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div>
+                                <form action="{{ url_for('rate_song') }}" method="POST" style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="hidden" name="spotify_id" value="{{ track.id }}">
+                                    <input type="hidden" name="name" value="{{ track.name }}">
+                                    <input type="hidden" name="artist" value="{{ track.artists[0].name }}">
+                                    <input type="hidden" name="image_url" value="{{ track.album.images[0].url if track.album.images else '' }}">
+                                    <input type="hidden" name="current_query" value="">
+
+                                    <select name="score" required style="padding: 6px; background: #121212; color: white; border: 1px solid #e50991; border-radius: 4px; cursor: pointer;">
+                                        <option value="" disabled {% if not rated_songs or track.id not in rated_songs %}selected{% endif %}>Notă</option>
+                                        <option value="1" {% if rated_songs and track.id in rated_songs and rated_songs[track.id]==1 %}selected{% endif %}>1 ★</option>
+                                        <option value="2" {% if rated_songs and track.id in rated_songs and rated_songs[track.id]==2 %}selected{% endif %}>2 ★★</option>
+                                        <option value="3" {% if rated_songs and track.id in rated_songs and rated_songs[track.id]==3 %}selected{% endif %}>3 ★★★</option>
+                                        <option value="4" {% if rated_songs and track.id in rated_songs and rated_songs[track.id]==4 %}selected{% endif %}>4 ★★★★</option>
+                                        <option value="5" {% if rated_songs and track.id in rated_songs and rated_songs[track.id]==5 %}selected{% endif %}>5 ★★★★★</option>
+                                    </select>
+
+                                    <input type="text" name="comment" placeholder="Recenzie... (opțional)" style="padding: 6px 12px; background: #121212; color: white; border: 1px solid #333; border-radius: 4px; font-size: 0.85rem; width: 150px;">
+
+                                    <button type="submit" style="background: #e50991; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">
+                                        {% if rated_songs and track.id in rated_songs %}Update{% else %}Rate ⭐{% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <br>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <a href="{{ url_for('recomandari') }}" style="background: #e50991; color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; font-weight: bold;">
+                        🔄 Schimbă recomandările
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" style="background: #333; color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; font-weight: bold;">
+                        Înapoi la Dashboard
+                    </a>
+                </div>
+            {% else %}
+                <div class="item-box" style="justify-content: center; padding: 30px;">
+                    <p style="color: #666; margin: 0; font-style: italic;">Nu avem suficiente date pentru a genera recomandări. Asigură-te că ai conectat contul de Spotify sau ai oferit note de top (4-5 stele) melodiilor!</p>
+                </div>
+                <br>
+                <a href="{{ url_for('dashboard') }}" style="background: #e50991; color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; font-weight: bold; display: inline-block;">Înapoi la Dashboard</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+
+</html>
