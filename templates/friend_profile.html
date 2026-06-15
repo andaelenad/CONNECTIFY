@@ -91,10 +91,16 @@
                                 <span style="color: #888; font-size: 0.85rem;">by {{ r.song.artist }}</span>
                             </div>
                         </div>
+                        {% if r.comment %}
+                        <p style="margin: 5px 0 0 0; color: #aaa; font-style: italic; font-size: 0.9rem; background: #252525; padding: 5px 10px; border-radius: 4px; display: inline-block;">
+                            💬 "{{ r.comment }}"
+                        </p>
+                        {% endif %}
                         
                         <div style="color: #e50991; font-weight: bold; font-size: 1.1rem;">
                             {% for i in range(r.score) %}★{% endfor %}
                         </div>
+                        
                     </div>
                 {% endfor %}
             </div>
