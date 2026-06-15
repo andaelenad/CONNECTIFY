@@ -18,7 +18,7 @@
                 <h1>Welcome to <b>Connectify!</b></h1>
                 {% if session.get('user_id') %}
                 <!-- Ce vede utilizatorul dacă ESTE logat -->
-                <p>Ești conectat! <a href="{{ url_for('get_tracks') }}" class="btn-primary">
+                <p>Ești conectat! <a href="{{ url_for('dashboard') }}" class="btn-primary">Intră în Profilul Meu</a></p>
                         Mergi la Dashboard
                     </a> pentru a vedea noutățile.</p>
                 <div class="auth-buttons" style="margin-top: 20px;">

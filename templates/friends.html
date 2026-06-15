@@ -12,6 +12,12 @@
 
         <main>
             <h2>Lista de prieteni</h2>
+            
+            <p style="margin-bottom: 20px;">
+                Vrei să adaugi pe cineva nou? 
+                <b><a href="{{ url_for('search_users') }}" style="color: #e50991; text-decoration: underline;">Caută utilizatori aici.</a></b>
+            </p>
+            
             <hr>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -43,7 +49,7 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>Încă nu ai prieteni în listă. <a href="{{ url_for('search_users') }}">Caută utilizatori aici.</a></p>
+                <p>Încă nu ai prieteni adăugați în listă.</p>
             {% endif %}
         </main>
     </div>
