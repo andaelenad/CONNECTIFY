@@ -519,7 +519,7 @@ def view_friend_profile(friend_id):
     if not is_friend:
         flash("Nu poți vizualiza profilul unui utilizator care nu îți este prieten!", "danger")
         return redirect(url_for('view_friends'))
-        
+         
     friend = User.query.get_or_404(friend_id)
     friend_ratings = Rating.query.filter_by(user_id=friend_id).all()
     friend_comments= Rating.query.filter_by(user_id=friend_id).filter(Rating.comment != None).all()
