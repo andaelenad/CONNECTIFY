@@ -183,7 +183,11 @@
             <p style="color: #aaa;">Piese alese special pentru tine, bazat pe <strong>{{ sursa }}</strong>:</p>
 
             <div style="margin-top: 15px;">
-
+                {% if eroare_ai %}
+                    <div class="alert alert-warning">
+                        {{ eroare_ai }}
+                    </div>
+                {% else %}
                     {% for track in ai_tracks %}
 
                     <div class="item-box">
@@ -193,7 +197,6 @@
                             {% if track.album.images %}
 
                             <img src="{{ track.album.images[0].url }}" alt="Copertă"
-
                                 style="width: 50px; height: 50px; border-radius: 4px; object-fit: cover;">
 
                             {% else %}
@@ -212,7 +215,8 @@
 
                                 {% if rated_songs and track.id in rated_songs %}
 
-                                <span style="display: inline-block; margin-top: 4px; background: rgba(229, 9, 145, 0.15); color: #e50991; font-size: 0.72rem; font-weight: bold; padding: 1px 6px; border-radius: 10px; border: 1px solid #e50991;">
+                                <span
+                                    style="display: inline-block; margin-top: 4px; background: rgba(229, 9, 145, 0.15); color: #e50991; font-size: 0.72rem; font-weight: bold; padding: 1px 6px; border-radius: 10px; border: 1px solid #e50991;">
 
                                     Notă acordată: {{ rated_songs[track.id] }} ★
 
@@ -228,7 +232,8 @@
 
                         <div>
 
-                            <form action="{{ url_for('rate_song') }}" method="POST" style="display: flex; align-items: center; gap: 8px;">
+                            <form action="{{ url_for('rate_song') }}" method="POST"
+                                style="display: flex; align-items: center; gap: 8px;">
 
                                 <input type="hidden" name="spotify_id" value="{{ track.id }}">
 
@@ -236,35 +241,45 @@
 
                                 <input type="hidden" name="artist" value="{{ track.artists[0].name }}">
 
-                                <input type="hidden" name="image_url" value="{{ track.album.images[0].url if track.album.images else '' }}">
+                                <input type="hidden" name="image_url"
+                                    value="{{ track.album.images[0].url if track.album.images else '' }}">
 
                                 <input type="hidden" name="current_query" value="">
 
 
 
-                                <select name="score" required style="padding: 6px; background: #121212; color: white; border: 1px solid #e50991; border-radius: 4px; cursor: pointer;">
+                                <select name="score" required
+                                    style="padding: 6px; background: #121212; color: white; border: 1px solid #e50991; border-radius: 4px; cursor: pointer;">
 
-                                    <option value="" disabled {% if not rated_songs or track.id not in rated_songs %}selected{% endif %}>Notă</option>
+                                    <option value="" disabled {% if not rated_songs or track.id not in rated_songs
+                                        %}selected{% endif %}>Notă</option>
 
-                                    <option value="1" {% if rated_songs and track.id in rated_songs and rated_songs[track.id] == 1 %}selected{% endif %}>1 ★</option>
+                                    <option value="1" {% if rated_songs and track.id in rated_songs and
+                                        rated_songs[track.id]==1 %}selected{% endif %}>1 ★</option>
 
-                                    <option value="2" {% if rated_songs and track.id in rated_songs and rated_songs[track.id] == 2 %}selected{% endif %}>2 ★★</option>
+                                    <option value="2" {% if rated_songs and track.id in rated_songs and
+                                        rated_songs[track.id]==2 %}selected{% endif %}>2 ★★</option>
 
-                                    <option value="3" {% if rated_songs and track.id in rated_songs and rated_songs[track.id] == 3 %}selected{% endif %}>3 ★★★</option>
+                                    <option value="3" {% if rated_songs and track.id in rated_songs and
+                                        rated_songs[track.id]==3 %}selected{% endif %}>3 ★★★</option>
 
-                                    <option value="4" {% if rated_songs and track.id in rated_songs and rated_songs[track.id] == 4 %}selected{% endif %}>4 ★★★★</option>
+                                    <option value="4" {% if rated_songs and track.id in rated_songs and
+                                        rated_songs[track.id]==4 %}selected{% endif %}>4 ★★★★</option>
 
-                                    <option value="5" {% if rated_songs and track.id in rated_songs and rated_songs[track.id] == 5 %}selected{% endif %}>5 ★★★★★</option>
+                                    <option value="5" {% if rated_songs and track.id in rated_songs and
+                                        rated_songs[track.id]==5 %}selected{% endif %}>5 ★★★★★</option>
 
                                 </select>
 
 
 
-                                <input type="text" name="comment" placeholder="Scrie o scurtă recenzie... (opțional)" style="padding: 6px 12px; background: #121212; color: white; border: 1px solid #333; border-radius: 4px; font-size: 0.85rem; width: 180px;">
+                                <input type="text" name="comment" placeholder="Scrie o scurtă recenzie... (opțional)"
+                                    style="padding: 6px 12px; background: #121212; color: white; border: 1px solid #333; border-radius: 4px; font-size: 0.85rem; width: 180px;">
 
 
 
-                                <button type="submit" style="background: #e50991; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">
+                                <button type="submit"
+                                    style="background: #e50991; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">
 
                                     {% if rated_songs and track.id in rated_songs %}Update{% else %}Rate ⭐{% endif %}
 
@@ -277,8 +292,8 @@
                     </div>
 
                     {% endfor %}
-
-                </div>
+                {% endif %}
+            </div>
 
             <br>
             <a href="{{ url_for('dashboard') }}"

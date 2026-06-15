@@ -1,6 +1,6 @@
 import os
 import json
-from google import genai
+import ollama
 from flask import Flask, request, url_for, session, redirect, render_template, flash
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -20,8 +20,6 @@ app.config['SESSION_COOKIE_NAME'] = 'Connectify_Session'
 # actualizat URI-ul pentru Aiven (PostgreSQL)
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://avnadmin:AVNS_dlwEpYk7NtFpIKxzuWF@pg-6647a18-rurig.d.aivencloud.com:26923/defaultdb?sslmode=require"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-ai_client = genai.Client()
 
 class DatabaseSingleton:
     _instance = None
@@ -169,14 +167,13 @@ def dashboard():
     tracks = []
     token_info = get_token()
     
-    # aducem piesele live din API
+    # 1. Preluare piese din Spotify live / Cache (Neschimbat)
     if token_info:
         try:
             sp = spotipy.Spotify(auth=token_info['access_token'])
             results = sp.current_user_top_tracks(limit=5, time_range='medium_term')
             tracks = results['items']
             
-            # API-ul ne-a dat piese => actualizam tabela de top din DB
             if tracks:
                 UserTopSong.query.filter_by(user_id=user.id).delete()
                 db.session.commit()
@@ -210,47 +207,72 @@ def dashboard():
                 'album': {'images': [{'url': m.song.image_url}]}
             })
 
-    # preluare toate rating-urile pentru sectiunea de jos
     ratings = Rating.query.filter_by(user_id=user.id).all()
     user_rated_songs = {r.spotify_item_id: r.score for r in ratings}
     
     ai_tracks_details = []
     tip_sursa = ""
-    
-    # Preluăm sursele pentru AI (Rating-uri sau Top 5)
+    eroare_ai = None
+
     high_ratings = Rating.query.filter(Rating.user_id == user.id, Rating.score >= 4).all()
     if high_ratings:
-        tip_sursa = "rating-urile tale"
-        surse_muzica = [f"'{r.song.name}' de {r.song.artist}" for r in high_ratings]
+        tip_sursa = "rating-urile tale de top"
+        surse_muzica = [f"{r.song.name} - {r.song.artist}" for r in high_ratings if r.song]
     else:
         top_songs = UserTopSong.query.filter_by(user_id=user.id).limit(5).all()
         tip_sursa = "topul tău Spotify"
-        surse_muzica = [f"'{t.song.name}' de {t.song.artist}" for t in top_songs]
+        surse_muzica = [f"{t.song.name} - {t.song.artist}" for t in top_songs if t.song]
+
+    surse_muzica = list(set(surse_muzica))
 
     if surse_muzica:
         text_piese = "\n- ".join(surse_muzica)
-        prompt = (
-            f"Utilizatorul ascultă:\n- {text_piese}\n\n"
-            f"Generează o listă cu exact 3 recomandări de cântece noi. "
-            f"Răspunde DOAR cu un array JSON de string-uri: [\"Piesa Artist\", ...]"
-        )
-
+        
         try:
-            response = ai_client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-            curat_json = response.text.strip().replace("```json", "").replace("```", "")
-            liste_nume_piese = json.loads(curat_json)
+            # Creăm un client explicit local pentru a evita problemele de mediu virtual
+            from ollama import Client
+            local_client = Client(host='http://localhost:11434')
             
-            sp = spotipy.Spotify(auth=get_token()['access_token'])
-            for nume_piesa in liste_nume_piese:
-                search_results = sp.search(q=nume_piesa, limit=1, type='track')
-                if search_results['tracks']['items']:
-                    ai_tracks_details.append(search_results['tracks']['items'][0])
+            response = local_client.chat(
+                model='llama3',
+                messages=[
+                    {
+                        'role': 'system',
+                        'content': (
+                            "Ești un expert muzical genial. Analizează piesele și recomandă exact 3 piese noi, "
+                            "diferite ca nume, compatibile ca gen. Returnează doar cele 3 piese, separate prin '|||'. "
+                            "Exemplu: Piesă 1 - Artist 1 ||| Piesă 2 - Artist 2 ||| Piesă 3 - Artist 3"
+                        )
+                    },
+                    {
+                        'role': 'user',
+                        'content': f"Recomandă 3 piese pentru cineva care ascultă:\n{text_piese}"
+                    }
+                ],
+                options={
+                    'temperature': 0.8,
+                    'top_p': 0.9
+                }
+            )
+            
+            text_brut = response['message']['content'].strip()
+            
+            liste_nume_piese = [piesa.strip() for piesa in text_brut.split('|||') if piesa.strip()]
+            
+            liste_nume_piese = liste_nume_piese[:3]
+            
+            if token_info and liste_nume_piese:
+                sp = spotipy.Spotify(auth=token_info['access_token'])
+                for nume_piesa in liste_nume_piese:
+                    # Curățăm eventuale ghilimele rătăcite pe care le mai pune AI-ul
+                    nume_curat = nume_piesa.replace('"', '').replace("'", "")
+                    search_results = sp.search(q=nume_curat, limit=1, type='track')
+                    if search_results['tracks']['items']:
+                        ai_tracks_details.append(search_results['tracks']['items'][0])
+                        
         except Exception as e:
-            print(f"Eroare AI Dashboard: {e}")
-
-    # Preluare rating-uri pentru randare
-    ratings = Rating.query.filter_by(user_id=user.id).all()
-    user_rated_songs = {r.spotify_item_id: r.score for r in ratings}
+            print(f"Eroare Ollama Local: {e}")
+            eroare_ai = "🤖 Aplicația nu a putut comunica cu modelul AI local. Asigură-te că Ollama rulează în fundal!"
 
     return render_template('dashboard.html', 
                            user=user, 
@@ -258,7 +280,8 @@ def dashboard():
                            ratings=ratings, 
                            rated_songs=user_rated_songs, 
                            ai_tracks=ai_tracks_details, 
-                           sursa=tip_sursa)
+                           sursa=tip_sursa,
+                           eroare_ai=eroare_ai)
     
 @app.route('/logout')
 def logout():
