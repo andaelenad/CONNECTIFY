@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Connectify - Compatibilitate</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+        .compat-card {
+            background: #111;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px auto;
+            border: 1px solid #222;
+        }
+        .progress-bar-container {
+            background: #222;
+            border-radius: 20px;
+            margin: 25px 0;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #e50991, #b30059);
+            height: 25px;
+            text-align: right;
+            padding-right: 15px;
+            color: white;
+            font-weight: bold;
+            line-height: 25px;
+            width: 0%; /* Va fi controlat din tag-ul de style de mai jos */
+        }
+        .vibe-tag {
+            font-size: 1.5em;
+            color: #e50991;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+        
+        /* Grid-ul pentru artiștii comuni */
+        .artists-grid {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .artist-card {
+            width: 130px;
+            text-align: center;
+        }
+        .artist-img {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e50991;
+            box-shadow: 0 4px 10px rgba(229, 9, 145, 0.3);
+            margin-bottom: 10px;
+        }
+        .artist-name {
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: #eee;
+        }
+        
+        .btn-inapoi {
+            background-color: #e50991;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 20px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 30px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        {% include 'header.html' %}
+
+        <div class="compat-card">
+            <h1 style="font-size: 1.8rem;">Compatibilitatea ta cu {{ prieten.display_name or prieten.email }}</h1>
+            
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="syncProgress">
+                    {{ procent }}%
+                </div>
+            </div>
+
+            <div class="vibe-tag">Vibe-ul vostru comun: „{{ vibe }}”</div>
+            
+            {% if artisti %}
+                <h3 style="text-align: left; color: #aaa; border-bottom: 1px solid #222; padding-bottom: 8px;">
+                    Intersecții muzicale și artiști similari:
+                </h3>
+                <div class="artists-grid">
+                    {% for artist in artisti %}
+                        <div class="artist-card">
+                            <img src="{{ artist.image }}" alt="{{ artist.name }}" class="artist-img">
+                            <div class="artist-name">{{ artist.name }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: #666; font-style: italic;">Stiluri eclectice — AI-ul nu a extras artiști majori suprapuși direct.</p>
+            {% endif %}
+
+            <a href="{{ url_for('view_friend_profile', friend_id=prieten.id) }}" class="btn-inapoi">Inapoi la profil</a>
+        </div>
+    </div>
+
+    <style>
+        #syncProgress {
+            width: {{ procent }}%;
+        }
+    </style>
+
+</body>
+</html>

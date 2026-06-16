@@ -15,6 +15,9 @@
             height: auto !important;
             padding: 20px;
             box-sizing: border-box;
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
         }
         .container {
             width: 100%;
@@ -38,6 +41,47 @@
             margin-bottom: 10px;
             text-align: left;
         }
+        
+        /* Stiluri pentru ecranul de încărcare (Loading Screen) */
+        .loader-container {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border-left-color: #e50991;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-compatibilitate {
+            background-color: #e50991; 
+            color: white; 
+            padding: 12px 24px; 
+            border-radius: 25px; 
+            text-decoration: none; 
+            display: inline-block; 
+            font-weight: bold; 
+            margin-top: 15px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(229, 9, 145, 0.4);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .btn-compatibilitate:hover {
+            background-color: #b30059;
+            transform: scale(1.02);
+        }
     </style>
 </head>
 
@@ -47,10 +91,12 @@
 
         <div style="text-align: left; margin-top: 20px;">
             <a href="{{ url_for('view_friends') }}" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Înapoi la Prieteni</a>
-            <h1 style="margin-top: 10px;">Profilul lui {{ friend.display_name or friend.email }}</h1>
-            <p style="color: #aaa;">Membru Connectify conectat prin: <strong>{{ friend.email }}</strong></p>
+            <h1 style="margin-top: 10px;">Profilul lui {{ friend.display_name}}</h1>
         </div>
 
+        <a href="{{ url_for('compatibilitate', friend_id=friend.id) }}" class="btn-compatibilitate" id="linkCompat">
+            Testează Compatibilitatea
+        </a>
         <h2 class="section-title">Vibe-ul lui {{ friend.display_name or "ea" }}:</h2>
 {% if tracks %}
     <div style="margin-top: 20px;">

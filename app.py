@@ -1,6 +1,7 @@
 import os
 import json
-import ollama
+from openai import OpenAI
+import time
 from flask import Flask, request, url_for, session, redirect, render_template, flash
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -10,6 +11,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
 
 load_dotenv()
+openrouter_client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY")
+)
+
+MODELE_AI_GRATUITE = [
+    "openrouter/free"
+]
 
 app = Flask(__name__)
 
@@ -76,6 +85,18 @@ class UserTopSong(db.Model):
     
     # relatie pentru a accesa direct detaliile piesei din cache
     song = db.relationship('SongCache', backref='user_tops', lazy=True)
+    
+class ArtistCache(db.Model):
+    spotify_id = db.Column(db.String(100), primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    image_url = db.Column(db.String(500), nullable=True)
+
+class UserTopArtist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    spotify_id = db.Column(db.String(100), db.ForeignKey('artist_cache.spotify_id'), nullable=False)
+    
+    artist = db.relationship('ArtistCache', backref='user_artists', lazy=True)
 
 # functionalitati app
 def create_spotify_oauth():
@@ -159,7 +180,7 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login_app'))
         
-    user = User.query.get(session['user_id'])
+    user = db.session.get(User, session['user_id'])
     if not user:
         session.clear()
         return redirect(url_for('login_app'))
@@ -170,6 +191,8 @@ def dashboard():
     if token_info:
         try:
             sp = spotipy.Spotify(auth=token_info['access_token'])
+            
+            # 1. LOGICA EXISTENTĂ: Top 5 piese de la Spotify
             results = sp.current_user_top_tracks(limit=5, time_range='medium_term')
             tracks = results['items']
             
@@ -178,7 +201,7 @@ def dashboard():
                 db.session.commit()
                 
                 for track in tracks:
-                    song = SongCache.query.get(track['id'])
+                    song = db.session.get(SongCache, track['id'])
                     if not song:
                         song = SongCache(
                             spotify_id=track['id'],
@@ -192,6 +215,34 @@ def dashboard():
                     top_mapping = UserTopSong(user_id=user.id, spotify_id=track['id'])
                     db.session.add(top_mapping)
                 db.session.commit()
+
+            try:
+                top_artists_results = sp.current_user_top_artists(limit=30, time_range='medium_term')
+                artists = top_artists_results.get('items', [])
+                
+                if artists:
+                    UserTopArtist.query.filter_by(user_id=user.id).delete()
+                    db.session.commit()
+                    
+                    for art in artists:
+                        artist_salvat = db.session.get(ArtistCache, art['id'])
+                        if not artist_salvat:
+                            artist_salvat = ArtistCache(
+                                spotify_id=art['id'],
+                                name=art['name'],
+                                image_url=art['images'][0]['url'] if art['images'] else ''
+                            )
+                            db.session.add(artist_salvat)
+                            db.session.commit()
+                        
+                        top_art_mapping = UserTopArtist(user_id=user.id, spotify_id=art['id'])
+                        db.session.add(top_art_mapping)
+                        
+                    db.session.commit()
+                    print(f"[Cache] S-au salvat cu succes {len(artists)} artiști pentru {user.email}")
+            except Exception as e_artist:
+                print(f"A intervenit o eroare la salvarea artiștilor în cache: {e_artist}")
+
         except Exception as e:
             print(f"A intervenit o mică eroare la conexiunea live cu Spotify: {e}")
 
@@ -215,14 +266,12 @@ def dashboard():
                            ratings=ratings, 
                            rated_songs=user_rated_songs)
 
-
-# RUTA NOUA: Pagina separata pentru Recomandari AI
+#RECOMANDARI-------------------------------------------------------------------------------------------
 @app.route('/recomandari')
 def recomandari():
     if 'user_id' not in session:
         return redirect(url_for('login_app'))
         
-    # Reparat: Folosim db.session.get() în loc de query.get() pentru a elimina avertismentele din consolă
     user = db.session.get(User, session['user_id'])
     if not user:
         session.clear()
@@ -250,36 +299,41 @@ def recomandari():
 
     if surse_muzica:
         text_piese = "\n- ".join(surse_muzica)
-        try:
-            from ollama import Client
-            local_client = Client(host='http://localhost:11434')
-            
-            # Reparat: Indentarea a fost corectată pentru blocul de chat
-            response = local_client.chat(
-                model='llama3',
-                messages=[
-                    {
-                        'role': 'system',
-                        'content': (
-                            "Ești un robot programat să returneze STRICT text în formatul cerut. "
-                            "NU saluta, NU oferi explicații, NU scrie text înainte sau după piese. "
-                            "Analizează piesele utilizatorului și returnează EXACT 3 recomandări separate prin '|||'.\n"
-                            "Exemplu de răspuns valid:\n"
-                            "The 1975 - People ||| Arctic Monkeys - Do I Look Like a Fool? ||| Glass Animals - Black Mambo"
-                        )
-                    },
-                    {
-                        'role': 'user',
-                        'content': f"Recomandă exact 3 piese pentru cineva care ascultă:\n{text_piese}"
-                    }
-                ],
-                options={
-                    'temperature': 0.2, 
-                    'top_p': 0.9
-                }
-            )
-            
-            text_brut = response['message']['content'].strip()
+        
+        system_prompt = (
+            "Ești un robot programat să returneze STRICT text în formatul cerut. "
+            "NU saluta, NU oferi explicații, NU scrie text înainte sau după piese. "
+            "Analizează piesele utilizatorului și returnează EXACT 3 recomandări noi separate prin '|||'.\n"
+            "Exemplu de răspuns valid:\n"
+            "The 1975 - People ||| Arctic Monkeys - Do I Look Like a Fool? ||| Glass Animals - Black Mambo"
+        )
+        user_prompt = f"Recomandă exact 3 piese pentru cineva care ascultă:\n{text_piese}"
+        
+        text_brut = ""
+        
+        for model_curent in MODELE_AI_GRATUITE:
+            try:
+                print(f"[OpenRouter] Încercăm generarea cu modelul: {model_curent}...")
+                
+                response = openrouter_client.chat.completions.create(
+                    model=model_curent,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.2,
+                    timeout=12.0
+                )
+                
+                text_brut = response.choices[0].message.content.strip()
+                print(f"[OpenRouter] Succes cu modelul: {model_curent}!")
+                break  # Am primit răspunsul cu succes, oprim bucla `for`
+                
+            except Exception as e:
+                print(f"[OpenRouter Error] Modelul {model_curent} a eșuat: {e}. Trecem la următorul...")
+                time.sleep(0.5)  
+
+        if text_brut:
             liste_nume_piese = [piesa.strip() for piesa in text_brut.split('|||') if piesa.strip()]
             liste_nume_piese = liste_nume_piese[:3]
             
@@ -287,13 +341,14 @@ def recomandari():
                 sp = spotipy.Spotify(auth=token_info['access_token'])
                 for nume_piesa in liste_nume_piese:
                     nume_curat = nume_piesa.replace('"', '').replace("'", "")
-                    search_results = sp.search(q=nume_curat, limit=1, type='track')
-                    if search_results['tracks']['items']:
-                        ai_tracks_details.append(search_results['tracks']['items'][0])
-                        
-        except Exception as e:
-            print(f"Eroare Ollama Local: {e}")
-            eroare_ai = "🤖 Aplicația nu a putut comunica cu modelul AI local. Asigură-te că Ollama rulează în fundal!"
+                    try:
+                        search_results = sp.search(q=nume_curat, limit=1, type='track')
+                        if search_results['tracks']['items']:
+                            ai_tracks_details.append(search_results['tracks']['items'][0])
+                    except Exception as e:
+                        print(f"Eroare la căutarea pe Spotify pentru '{nume_curat}': {e}")
+        else:
+            eroare_ai = "Toate modelele AI din cloud sunt momentan aglomerate. Te rugăm să revii în câteva secunde!"
 
     return render_template('recomandari.html', 
                            user=user,
@@ -302,7 +357,135 @@ def recomandari():
                            eroare_ai=eroare_ai,
                            rated_songs=user_rated_songs,
                            ratings=ratings)
+    
+#COMPATIBILITATE----------------------------------------------------------------------------
+@app.route('/compatibilitate/<int:friend_id>')
+def compatibilitate(friend_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login_app'))
+        
+    user_curent = db.session.get(User, session['user_id'])
+    prieten = db.session.get(User, friend_id)
+    
+    if not user_curent or not prieten:
+        flash("Utilizator inexistent!", "danger")
+        return redirect(url_for('view_friends'))
 
+    # 1. Luăm artiștii de top din cache-ul mărit (acum vor fi până la 30)
+    top_artists_user = UserTopArtist.query.filter_by(user_id=user_curent.id).all()
+    nume_artisti_user = [m.artist.name for m in top_artists_user if m.artist]
+    
+    top_artists_prieten = UserTopArtist.query.filter_by(user_id=prieten.id).all()
+    nume_artisti_prieten = [m.artist.name for m in top_artists_prieten if m.artist]
+
+    # Rezervă: Dacă tabelele UserTopArtist sunt goale, folosim artiștii din piese
+    if not nume_artisti_user:
+        top_songs_user = UserTopSong.query.filter_by(user_id=user_curent.id).all()
+        nume_artisti_user = list(set([t.song.artist for t in top_songs_user if t.song]))
+    if not nume_artisti_prieten:
+        top_songs_prieten = UserTopSong.query.filter_by(user_id=friend_id).all()
+        nume_artisti_prieten = list(set([t.song.artist for t in top_songs_prieten if t.song]))
+
+    if not nume_artisti_user or not nume_artisti_prieten:
+        flash("Date insuficiente pentru calculul compatibilității!", "warning")
+        return redirect(url_for('view_friend_profile', friend_id=friend_id))
+
+    # --- CALCULĂM INTERSECȚIA STRICTĂ ÎN PYTHON ---
+    # Găsim artiștii care apar cu adevărat în AMBELE liste, ignorând literele mari/mici
+    artisti_comuni_reali = []
+    for art in nume_artisti_user:
+        if any(art.lower() == p.lower() for p in nume_artisti_prieten) and art not in artisti_comuni_reali:
+            artisti_comuni_reali.append(art)
+
+    # Prompt nou, mult mai restrictiv cu halucinațiile AI
+    system_prompt = (
+        "Ești un motor strict de analiză muzicală. Analizează listele de artiști de top ale celor doi utilizatori și returnează EXCLUSIV un JSON valid.\n"
+        "Reguli critice:\n"
+        "1. Calculează un procent real de compatibilitate (30-99%) pe baza preferințelor transmise.\n"
+        "2. Generează un nume scurt pentru vibe-ul lor comun.\n"
+        "3. În cheia 'artisti_finali', pune MAXIM 4 artiști. AI VOIE SĂ PUI DOAR artiști care apar în lista de 'Artiști comuni reali' trimisă de mine! Dacă acea listă este goală sau are mai puțin de 2 artiști, poți adăuga artiști din listele utilizatorilor, dar TREBUIE să fie artiști pe care cel puțin unul din ei îi ascultă direct în top. ESTE INTERZIS să inventezi sau să propui artiști care nu apar deloc în textul oferit de mine.\n"
+        "Format JSON:\n"
+        "{\n"
+        '  "procent": 80,\n'
+        '  "titlu_vibe": "Alternative Wave",\n'
+        '  "artisti_finali": ["Nume1", "Nume2"]\n'
+        "}"
+    )
+    
+    user_prompt = (
+        f"Artiști comuni reali (găsiți matematic): {', '.join(artisti_comuni_reali) if artisti_comuni_reali else 'NICIUNUL DIRECT'}\n\n"
+        f"Top 30 Artiști User 1: {', '.join(nume_artisti_user)}\n\n"
+        f"Top 30 Artiști User 2: {', '.join(nume_artisti_prieten)}"
+    )
+    
+    rezultat_json = {"procent": 50, "titlu_vibe": "Music Experience", "artisti_finali": artisti_comuni_reali[:4]}
+    
+    for model_curent in MODELE_AI_GRATUITE:
+        try:
+            response = openrouter_client.chat.completions.create(
+                model=model_curent,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.0, # Setăm la 0.0 pentru precizie maximă și zero creativitate/halucinație
+                timeout=10.0
+            )
+            text_raspuns = response.choices[0].message.content.strip()
+            if "```" in text_raspuns:
+                text_raspuns = text_raspuns.split("```")[1].replace("json", "").strip()
+            rezultat_json = json.loads(text_raspuns)
+            break
+        except Exception as e:
+            print(f"Eroare AI la parsare severă: {e}")
+
+    # Re-inițializare client Spotify local pentru poze valide
+    sp_local = None
+    try:
+        token_info = get_token()
+        if token_info:
+            import spotipy
+            sp_local = spotipy.Spotify(auth=token_info['access_token'])
+    except Exception as token_err:
+        print(f"Eroare sp_local: {token_err}")
+
+    # Dacă din cauza regulilor severe AI-ul a returnat o listă goală, punem ca fallback intersecția noastră din Python
+    artisti_de_afisat = rezultat_json.get("artisti_finali", [])
+    if not artisti_de_afisat and artisti_comuni_reali:
+        artisti_de_afisat = artisti_comuni_reali[:4]
+
+    artisti_cu_poze = []
+    for nume_artist in artisti_de_afisat:
+        foto_url = None
+        
+        # Căutăm mai întâi în cache-ul bazei noastre de date globale (e mult mai rapid)
+        artist_db = ArtistCache.query.filter(ArtistCache.name.ilike(nume_artist)).first()
+        if artist_db and artist_db.image_url:
+            foto_url = artist_db.image_url
+        elif sp_local:
+            # Dacă nu e în DB, facem o singură căutare live pe Spotify
+            try:
+                search_result = sp_local.search(q=f"artist:{nume_artist}", type="artist", limit=1)
+                items = search_result.get("artists", {}).get("items", [])
+                if items and items[0].get("images"):
+                    foto_url = items[0]["images"][0]["url"]
+            except Exception as ex:
+                print(f"Eroare căutare live pentru {nume_artist}: {ex}")
+        
+        if not foto_url:
+            foto_url = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=150"
+
+        artisti_cu_poze.append({
+            "name": nume_artist,
+            "image": foto_url
+        })
+
+    return render_template('compatibilitate.html', 
+                           user=user_curent, 
+                           prieten=prieten, 
+                           procent=rezultat_json["procent"],
+                           vibe=rezultat_json["titlu_vibe"],
+                           artisti=artisti_cu_poze)
 @app.route('/logout')
 def logout():
     session.clear()
