@@ -6,8 +6,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.0%2B-green.svg)](https://flask.palletsprojects.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Aiven%20Cloud-blue.svg)](https://aiven.io/)
-[![CI/CD](https://github.com/workflows/python-tests.yml/badge.svg)](#-6-asigurarea-calității-testare-automată--cicd)
-
+[![CI/CD](https://github.com/andaelenad/CONNECTIFY/actions/workflows/python-tests.yml/badge.svg)](#-6-asigurarea-calității-testare-automată--cicd)
 
 
 ## 🗺️ Cuprins
@@ -121,7 +120,7 @@ Toate deciziile de modelare structurală sunt reflectate în diagramele stocate 
 * **Diagrame UML furnizate în repository**:
   * **Use Case Diagram**: Detaliază interacțiunile actorilor (Web User, Registered User, Admin) cu sistemul (`UML diagrame/Use case Connectify (1).png`).
   
-  * **Entity-Relationship Diagram (ERD)**: Prezintă structura și relațiile tabelelor `User`, `SongCache`, `Rating`, `Friendship`, etc. 
+* **Entity-Relationship Diagram (ERD)**: Prezintă structura și relațiile tabelelor `User`, `SongCache`, `Rating`, `Friendship`, etc. 
   
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#FF1493', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'tertiaryColor': '#FF69B4', 'tertiaryTextColor': '#000000'}}}%%
@@ -176,9 +175,11 @@ erDiagram
         integer user_id FK
         varchar spotify_id FK
     }
-Flowchart / AI Flow: Descrie fluxul logic al aplicației și arhitectura de prelucrare AI pentru modulul de compatibilitate.
+```
 
-Fragment de cod
+  * **Flowchart / AI Flow**: Descrie fluxul logic al aplicației și arhitectura de prelucrare AI pentru modulul de compatibilitate.
+
+```mermaid
 graph TD
     A([Start: Click 'Vezi Compatibilitate']) --> B[Backend Flask: Preia UserID & FriendID]
     B --> C[(PostgreSQL Aiven: Extrage Top Artiști și Piese)]
@@ -209,6 +210,9 @@ graph TD
     class B,F,G,J,K,L backend;
     class C database;
     class H ai;
+```
+
+### 🌿 Source Control cu Git
 ---
 
 ## 🧪 6. Asigurarea Calității: Testare Automată & CI/CD
