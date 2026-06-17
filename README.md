@@ -115,7 +115,100 @@ Toate deciziile de modelare structurală sunt reflectate în diagramele stocate 
 
 
 3. **Flowchart & AI Flow:** Documentează vizual fluxul execuției codului din momentul trimiterii cererii de compatibilitate până la obținerea și parsarea răspunsului generativ furnizat de LLM.
+### 🏗️ Descrierea Arhitecturii și Diagrame
+* **Backend Arhitectură**: Python + Flask. Baza de date este un cluster **PostgreSQL** găzduit pe AivenCloud, mapat prin ORM-ul SQLAlchemy.
+* **Componente API**: `Spotipy` pentru integrarea fluxului de date muzicale și `OpenAI client` pentru integrarea LLM-urilor din OpenRouter.
+* **Diagrame UML furnizate în repository**:
+  * **Use Case Diagram**: Detaliază interacțiunile actorilor (Web User, Registered User, Admin) cu sistemul (`UML diagrame/Use case Connectify (1).png`).
+  
+  * **Entity-Relationship Diagram (ERD)**: Prezintă structura și relațiile tabelelor `User`, `SongCache`, `Rating`, `Friendship`, etc. 
+  
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#FF1493', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'tertiaryColor': '#FF69B4', 'tertiaryTextColor': '#000000'}}}%%
+erDiagram
+    User ||--o{ Rating : "are"
+    SongCache ||--o{ Rating : "primeste"
+    User ||--o{ Friendship : "trimite/primeste"
+    User ||--o{ UserTopSong : "asculta"
+    SongCache ||--o{ UserTopSong : "este in top"
+    User ||--o{ UserTopArtist : "asculta"
+    ArtistCache ||--o{ UserTopArtist : "este in top"
 
+    User {
+        integer id PK
+        boolean is_admin
+        varchar email
+        varchar password_hash
+        varchar spotify_id
+        varchar display_name
+    }
+    SongCache {
+        varchar spotify_id PK
+        varchar name
+        varchar artist
+        varchar image_url
+    }
+    ArtistCache {
+        varchar spotify_id PK
+        varchar name
+        varchar image_url
+    }
+    Rating {
+        integer id PK
+        integer score
+        varchar comment
+        integer user_id FK
+        varchar spotify_item_id FK
+    }
+    Friendship {
+        integer id PK
+        varchar status
+        integer user_id FK
+        integer friend_id FK
+    }
+    UserTopSong {
+        integer id PK
+        integer user_id FK
+        varchar spotify_id FK
+    }
+    UserTopArtist {
+        integer id PK
+        integer user_id FK
+        varchar spotify_id FK
+    }
+Flowchart / AI Flow: Descrie fluxul logic al aplicației și arhitectura de prelucrare AI pentru modulul de compatibilitate.
+
+Fragment de cod
+graph TD
+    A([Start: Click 'Vezi Compatibilitate']) --> B[Backend Flask: Preia UserID & FriendID]
+    B --> C[(PostgreSQL Aiven: Extrage Top Artiști și Piese)]
+    C --> D{Date suficiente?}
+    
+    D -- Nu --> E[Afișare Eroare: Date Insuficiente] --> Z([Stop])
+    D -- Da --> F[Intersectare matematică a gusturilor muzicale]
+    
+    F --> G[Construire System Prompt strict JSON]
+    G --> H((Apel API: OpenRouter LLM))
+    
+    H --> I{Răspunsul AI este JSON valid?}
+    
+    I -- Nu --> J[Aplicare Fallback: RegEx pentru izolare/curățare JSON]
+    J --> K[Parsare Obiect JSON]
+    I -- Da --> K
+    
+    K --> L[Trimite datele structurate către Frontend]
+    L --> M[Afișare Vibe Comun și Procentaj în Interfață]
+    M --> Z([Stop])
+
+    classDef backend fill:#fbcfe8,stroke:#9d174d,stroke-width:2px,color:#000;
+    classDef database fill:#fdf2f8,stroke:#db2777,stroke-width:2px,color:#000;
+    classDef ai fill:#f9a8d4,stroke:#831843,stroke-width:2px,color:#000;
+    classDef startstop fill:#fce7f3,stroke:#be185d,stroke-width:2px,color:#000;
+    
+    class A,Z startstop;
+    class B,F,G,J,K,L backend;
+    class C database;
+    class H ai;
 ---
 
 ## 🧪 6. Asigurarea Calității: Testare Automată & CI/CD
