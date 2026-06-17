@@ -1,0 +1,18 @@
+Raport Avansat de Utilizare a Tehnologiilor AI in Dezvoltarea Software
+
+Procesul de inginerie software din cadrul proiectului Connectify a fost optimizat prin integrarea metodologiilor bazate pe Modele de Limbaj Mari (LLMs), utilizand asistenti AI avansati (cum ar fi ecosistemul Gemini) pe post de consultant arhitectural si partener de programare (Pair Programmer). Acest flux de lucru a adus o valoare adaugata directa in toate etapele ciclului de viata al dezvoltarii aplicatiei.
+
+1. Selectia Arhitecturala si Integrarea Stack-ului Tehnologic
+
+Asistentul AI a servit ca un motor de decizie tehnica de mare viteza, facilitand selectia componentelor optime pentru aplicatie si reducand timpul alocat cercetarii initiale:
+
+* Analiza Comparativa a Framework-urilor: S-a evaluat utilizarea unui microframework agil precum Flask in detrimentul solutiilor monolitice rigide (ex: Django). Aceasta decizie a facilitat o implementare curata a rutelor personalizate de interogare si a redus latenta in procesarea request-urilor.
+* Modelarea Stratului de Persistenta a Datelor: AI-ul a oferit consultanta in alegerea maparii obiectual-relationale (ORM) prin Flask-SQLAlchemy pentru conectarea stabila la serviciul cloud gestionat Aiven PostgreSQL, garantand compatibilitatea versiunilor de drivere (psycopg2-binary).
+* Orchestrarea API-urilor si Securitate: S-a accelerat scrierea codului de tip boilerplate pentru configurarea fluxului securizat de autentificare OAuth prin SDK-ul spotipy (SpotifyOAuth), implementand corect parametrii de reimprospatare a token-urilor expirate direct in sesiunea Flask.
+
+2. Ingineria Prompt-urilor (Prompt Engineering) si Structurarea Logica
+
+Pentru modulele inteligente din Connectify, s-au proiectat arhitecturi de prompt-uri de sistem stricte care obliga modelele generative sa se comporte ca microservicii deterministe:
+
+* Modulul de Recomandari Muzicale (/recomandari): AI-ul a ajutat la definirea unui System Prompt robust. Acesta instruieste modelul din cloud sa analizeze datele din cache (melodiile evaluate cu 4-5 stele sau topurile Spotify interne) si sa returneze exclusiv string-uri delimitate prin token-ul structural |||, eliminand complet textul conversational adiacent (salutari, explicatii) si permitand parsarea sigura in backend.
+* Algoritmul de Compatibilitate (/compatibilitate): S-a conceput un prompt de sistem pentru maparea intersectiilor muzicale reale dintre utilizatori. Modelul primeste listele matematice suprapuse si este constrans sa genereze un format strict JSON structurat pe chei fixe (procent, titlu_vibe, artisti_finali), asigurand asimilarea facila a datelor in front-end-ul aplicatiei.
