@@ -87,18 +87,35 @@ class DatabaseSingleton:
 
 ## 🌿 4. Metodologia de Dezvoltare & Source Control (Git)
 
-Proiectul a fost dezvoltat respectând rigorile metodologiilor agile de dezvoltare iterativă, având la bază un backlog granular de funcționalități (User Stories).
+Proiectul a fost dezvoltat respectând rigorile metodologiilor agile de dezvoltare iterativă, având la bază un backlog granular de funcționalități (User Stories) gestionat în **Jira**, utilizând metodologia Kanban. 
 
+### 📋 Crearea de Specificații și Backlog-uri
+Sarcinile au fost împărțite echitabil între membrii echipei, acoperind toate aspectele proiectului:
+
+* **Anda:** Responsabilă de testarea unitară (Unit Testing), implementarea design pattern-urilor (Singleton), generarea diagramelor actualizate și redactarea documentației finale (Raport AI).
+* **Ruxandra (Maria):** A dezvoltat arhitectura bazei de date, integrarea API-ului Spotify (OAuth2), sistemul de rating și funcționalitățile de socializare (Adăugare Prieteni, Profil Utilizator).
+* **Sabina:** S-a ocupat de interfața grafică (UI), sistemul de Autentificare (Login/Register), integrarea agenților AI și rezolvarea conflictelor de pe Git.
+
+**Evidența sarcinilor din Jira:**
+
+*Backlog Anda:*
+![Task-uri Anda](backlog-uri/anda.jpg)
+
+*Backlog Ruxandra:*
+![Task-uri Ruxandra](backlog-uri/maria.jpg)
+
+*Backlog Sabina:*
+![Task-uri Sabina](backlog-uri/sabina.jpg)
+
+### 🌿 Source Control
+Dezvoltarea a respectat bunele practici de Source Control folosind **Git** și GitHub:
 * **Managementul Ramurilor (Branching Policy):** S-a evitat complet lucrul direct pe ramura principală (`main`). Dezvoltarea s-a segmentat pe branch-uri dedicate:
-* `feature/autentificare-spotify` — implementarea fluxului securizat OAuth 2.0.
-* `feature/integrare-agenti-ai` — definirea prompt-urilor și configurarea OpenRouter.
-* `feature/baza-de-date-postgres` — maparea modelelor prin ORM și migrarea pe Aiven Cloud.
-* `feature/interfata-utilizator` — scrierea șabloanelor HTML și stilizarea CSS.
-
-
+  * `feature/autentificare-spotify` — implementarea fluxului securizat OAuth 2.0.
+  * `feature/integrare-agenti-ai` — definirea prompt-urilor și configurarea OpenRouter.
+  * `feature/baza-de-date-postgres` — maparea modelelor prin ORM și migrarea pe Aiven Cloud.
+  * `feature/interfata-utilizator` — scrierea șabloanelor HTML și stilizarea CSS.
 * **Integrarea Codului:** Reunirea ramurilor s-a realizat prin **Pull Requests (PRs)** în urma procesului de Code Review. Conflictele au fost rezolvate local prin proceduri curate de `merge` și `rebase`.
 * **Contribuție:** Proiectul numără un istoric dens de versiuni, respectând cerința minimă de **5 commit-uri atomice și descriptive per student implicat**.
-
 ---
 
 ## 📊 5. Modelarea Datelor & Diagrame UML
