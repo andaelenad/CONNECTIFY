@@ -50,7 +50,13 @@ class User(db.Model):
     spotify_id = db.Column(db.String(100), unique=True, nullable=True)
     display_name = db.Column(db.String(100))
     # legatura cu rating-uri
-    ratings = db.relationship('Rating', backref='user', lazy=True)
+    ratings = db.relationship('Rating', backref='user', cascade="all, delete-orphan", lazy=True)
+    #legatura cu prietenii (cele doua relatii pentru a acoperi ambele directii)
+    friendships_sent = db.relationship('Friendship', foreign_keys='Friendship.user_id', cascade="all, delete-orphan", lazy=True)
+    friendships_received = db.relationship('Friendship', foreign_keys='Friendship.friend_id', cascade="all, delete-orphan", lazy=True)
+    #legatura cu topuri
+    top_songs = db.relationship('UserTopSong', cascade="all, delete-orphan", lazy=True)
+    top_artists = db.relationship('UserTopArtist', cascade="all, delete-orphan", lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -140,18 +146,14 @@ def signup():
 
         new_user = User(email=email)
         new_user.set_password(password)
+        
+        if email in ["ruricojocaru@gmail.com", "sabinamaria2005@gmail.com"]: 
+            new_user.is_admin = True
+
         db.session.add(new_user)
         db.session.commit()
         
         flash("Cont creat cu succes! Te poti loga.", "success")
-        if email == "ruricojocaru@gmail.com": 
-            new_user.is_admin = True
-        if email == "sabinamaria2005@gmail.com": 
-            new_user.is_admin = True
-
-        new_user.set_password(password)
-        db.session.add(new_user)
-        db.session.commit()
         return redirect(url_for('login_app'))
     return render_template('signup.html')
 
@@ -167,7 +169,12 @@ def login_app():
         email = request.form.get('email')
         password = request.form.get('password')
         user = User.query.filter_by(email=email).first()
+        
         if user and user.check_password(password):
+            if email in ["ruricojocaru@gmail.com", "sabinamaria2005@gmail.com"] and not user.is_admin:
+                user.is_admin = True
+                db.session.commit()
+
             session.permanent = True
             session['user_id'] = user.id
             return redirect(url_for('dashboard'))
@@ -632,13 +639,17 @@ def admin_panel():
 
 @app.route('/admin/delete_user/<int:uid>')
 def delete_user(uid):
-    # verificare de securitate (sa nu stearga cineva prin URL fara sa fie admin)
     current_user = User.query.get(session.get('user_id'))
     if not current_user or not current_user.is_admin:
         return "Neautorizat", 403
 
     user_to_delete = User.query.get(uid)
     if user_to_delete:
+        Friendship.query.filter((Friendship.user_id == uid) | (Friendship.friend_id == uid)).delete()
+        Rating.query.filter_by(user_id=uid).delete()
+        UserTopSong.query.filter_by(user_id=uid).delete()
+        UserTopArtist.query.filter_by(user_id=uid).delete()
+        
         db.session.delete(user_to_delete)
         db.session.commit()
     
